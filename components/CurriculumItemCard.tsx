@@ -4,8 +4,8 @@ import { CurriculumItem } from "@/types/curriculum";
 import { cn } from "@/lib/utils";
 
 const TYPE_STYLES: Record<CurriculumItem["type"], string> = {
-  운동: "bg-cocoa/10 text-cocoa",
-  교육: "bg-amber-700/10 text-amber-800",
+  운동: "bg-cocoa/15 text-cocoa",
+  교육: "bg-amber-400/15 text-amber-300",
 };
 
 export function CurriculumItemCard({ item }: { item: CurriculumItem }) {

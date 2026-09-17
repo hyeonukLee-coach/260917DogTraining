@@ -141,11 +141,11 @@ export function DogProfileForm() {
                     onValueChange={field.onChange}
                     className="grid grid-cols-2 gap-3"
                   >
-                    <label className="flex items-center gap-2 rounded-xl border border-input bg-white px-3 py-2.5 text-sm">
+                    <label className="flex items-center gap-2 rounded-xl border border-input bg-sand px-3 py-2.5 text-sm">
                       <RadioGroupItem value="age" id="age-mode-age" />
                       나이로 입력
                     </label>
-                    <label className="flex items-center gap-2 rounded-xl border border-input bg-white px-3 py-2.5 text-sm">
+                    <label className="flex items-center gap-2 rounded-xl border border-input bg-sand px-3 py-2.5 text-sm">
                       <RadioGroupItem value="birthDate" id="age-mode-birth" />
                       생년월일로 입력
                     </label>
@@ -195,11 +195,11 @@ export function DogProfileForm() {
                       onValueChange={field.onChange}
                       className="grid grid-cols-2 gap-2"
                     >
-                      <label className="flex items-center gap-2 rounded-xl border border-input bg-white px-3 py-2 text-sm">
+                      <label className="flex items-center gap-2 rounded-xl border border-input bg-sand px-3 py-2 text-sm">
                         <RadioGroupItem value="수컷" id="gender-male" />
                         수컷
                       </label>
-                      <label className="flex items-center gap-2 rounded-xl border border-input bg-white px-3 py-2 text-sm">
+                      <label className="flex items-center gap-2 rounded-xl border border-input bg-sand px-3 py-2 text-sm">
                         <RadioGroupItem value="암컷" id="gender-female" />
                         암컷
                       </label>
@@ -221,7 +221,7 @@ export function DogProfileForm() {
               </div>
             </div>
 
-            <div className="flex items-center justify-between rounded-xl border border-input bg-white px-4 py-3">
+            <div className="flex items-center justify-between rounded-xl border border-input bg-sand px-4 py-3">
               <Label htmlFor="neutered" className="cursor-pointer">
                 중성화 완료
               </Label>
@@ -315,7 +315,7 @@ export function DogProfileForm() {
                   {(["운동", "교육", "둘다"] as const).map((type) => (
                     <label
                       key={type}
-                      className="flex flex-col items-center gap-2 rounded-xl border border-input bg-white px-3 py-3 text-sm font-medium"
+                      className="flex flex-col items-center gap-2 rounded-xl border border-input bg-sand px-3 py-3 text-sm font-medium"
                     >
                       <RadioGroupItem value={type} id={`curriculum-${type}`} />
                       {type}

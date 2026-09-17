@@ -45,10 +45,10 @@ const config: Config = {
           DEFAULT: "hsl(var(--card))",
           foreground: "hsl(var(--card-foreground))",
         },
-        // brand palette
-        paper: "#FAF9F6",
-        sand: "#E8DFD3",
-        cocoa: "#8B6F52",
+        // brand palette — 시크 다크 톤
+        paper: "#14120F",
+        sand: "#241F19",
+        cocoa: "#C9A467",
       },
       borderRadius: {
         lg: "var(--radius)",
