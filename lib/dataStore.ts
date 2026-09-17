@@ -8,6 +8,7 @@ import { DogProfile, GeneratedCurriculum } from "@/types/curriculum";
 const STORAGE_KEYS = {
   PROFILE: "dog-curriculum:profile",
   CURRICULUM: "dog-curriculum:curriculum",
+  GEMINI_API_KEY: "dog-curriculum:gemini-api-key",
 } as const;
 
 function isBrowser(): boolean {
@@ -61,4 +62,31 @@ export function clearAll(): void {
   if (!isBrowser()) return;
   window.localStorage.removeItem(STORAGE_KEYS.PROFILE);
   window.localStorage.removeItem(STORAGE_KEYS.CURRICULUM);
+}
+
+/**
+ * Gemini API 키는 사용자의 브라우저에만 저장되며, 저장/조회 시 서버로 전송되지 않는다.
+ * 실제 AI 호출 시에도 이 키는 Google API로 직접 전달될 뿐 우리 서버를 거치지 않는다.
+ */
+export function saveGeminiApiKey(key: string): void {
+  if (!isBrowser()) return;
+  try {
+    window.localStorage.setItem(STORAGE_KEYS.GEMINI_API_KEY, key);
+  } catch {
+    // 저장 실패 시 조용히 무시한다.
+  }
+}
+
+export function getGeminiApiKey(): string | null {
+  if (!isBrowser()) return null;
+  try {
+    return window.localStorage.getItem(STORAGE_KEYS.GEMINI_API_KEY);
+  } catch {
+    return null;
+  }
+}
+
+export function clearGeminiApiKey(): void {
+  if (!isBrowser()) return;
+  window.localStorage.removeItem(STORAGE_KEYS.GEMINI_API_KEY);
 }

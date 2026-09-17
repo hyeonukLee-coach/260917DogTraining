@@ -2,7 +2,7 @@
 
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { AlertTriangle } from "lucide-react";
+import { AlertTriangle, Sparkles, Zap } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -44,7 +44,20 @@ export default function ResultPage() {
   return (
     <MotionDiv {...fadeInProps} className="flex flex-col gap-6">
       <header className="flex flex-col gap-1.5">
-        <h1 className="text-2xl font-bold text-cocoa">{profile.name}의 7일 커리큘럼</h1>
+        <div className="flex flex-wrap items-center gap-2">
+          <h1 className="text-2xl font-bold text-cocoa">{profile.name}의 7일 커리큘럼</h1>
+          {curriculum.source === "ai" ? (
+            <span className="inline-flex items-center gap-1 rounded-full bg-cocoa/15 px-2.5 py-0.5 text-xs font-semibold text-cocoa">
+              <Sparkles className="h-3 w-3" />
+              Gemini AI 생성
+            </span>
+          ) : (
+            <span className="inline-flex items-center gap-1 rounded-full bg-muted px-2.5 py-0.5 text-xs font-semibold text-muted-foreground">
+              <Zap className="h-3 w-3" />
+              빠른 생성
+            </span>
+          )}
+        </div>
         <p className="text-sm text-muted-foreground">
           입력하신 정보를 바탕으로 만든 맞춤 커리큘럼이에요. Day를 눌러 확인해보세요.
         </p>

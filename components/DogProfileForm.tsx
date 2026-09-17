@@ -1,10 +1,13 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Controller, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
+import { AlertCircle, Eye, EyeOff, Sparkles } from "lucide-react";
 
+import { AICurriculumError } from "@/lib/aiCurriculumEngine";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -38,6 +41,8 @@ const formSchema = z
     behaviorConcerns: z.string().optional(),
     physicalConcerns: z.string().optional(),
     curriculumType: z.string().min(1, "커리큘럼 유형을 선택해주세요"),
+    generationMode: z.enum(["rule", "ai"]),
+    apiKey: z.string().optional(),
   })
   .superRefine((data, ctx) => {
     if (data.ageInputMode === "birthDate" && !data.birthDate) {
@@ -51,6 +56,13 @@ const formSchema = z
         code: "custom",
         path: ["curriculumType"],
         message: "커리큘럼 유형을 선택해주세요",
+      });
+    }
+    if (data.generationMode === "ai" && !data.apiKey?.trim()) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["apiKey"],
+        message: "Gemini API 키를 입력해주세요",
       });
     }
   });
@@ -71,6 +83,8 @@ const defaultValues: FormValues = {
   behaviorConcerns: "",
   physicalConcerns: "",
   curriculumType: "",
+  generationMode: "rule",
+  apiKey: "",
 };
 
 function parseOptionalNumber(value?: string): number | undefined {
@@ -82,12 +96,20 @@ function parseOptionalNumber(value?: string): number | undefined {
 export function DogProfileForm() {
   const router = useRouter();
   const submitProfile = useCurriculumStore((state) => state.submitProfile);
+  const setApiKey = useCurriculumStore((state) => state.setApiKey);
+  const storedApiKey = useCurriculumStore((state) => state.apiKey);
+  const isHydrated = useCurriculumStore((state) => state.isHydrated);
+  const hydrate = useCurriculumStore((state) => state.hydrate);
+
+  const [submitError, setSubmitError] = useState<string | null>(null);
+  const [showApiKey, setShowApiKey] = useState(false);
 
   const {
     register,
     control,
     handleSubmit,
     watch,
+    setValue,
     formState: { errors, isSubmitting },
   } = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -95,8 +117,21 @@ export function DogProfileForm() {
   });
 
   const ageInputMode = watch("ageInputMode");
+  const generationMode = watch("generationMode");
 
-  const onSubmit = (values: FormValues) => {
+  useEffect(() => {
+    hydrate();
+  }, [hydrate]);
+
+  useEffect(() => {
+    if (isHydrated && storedApiKey) {
+      setValue("apiKey", storedApiKey);
+    }
+  }, [isHydrated, storedApiKey, setValue]);
+
+  const onSubmit = async (values: FormValues) => {
+    setSubmitError(null);
+
     const input: DogProfileInput = {
       name: values.name.trim(),
       birthDate: values.ageInputMode === "birthDate" ? values.birthDate : undefined,
@@ -112,8 +147,23 @@ export function DogProfileForm() {
       curriculumType: values.curriculumType as CurriculumType,
     };
 
-    submitProfile(input);
-    router.push("/result");
+    if (values.generationMode === "ai" && values.apiKey?.trim()) {
+      setApiKey(values.apiKey.trim());
+    }
+
+    try {
+      await submitProfile(input, {
+        mode: values.generationMode,
+        apiKey: values.apiKey?.trim(),
+      });
+      router.push("/result");
+    } catch (err) {
+      setSubmitError(
+        err instanceof AICurriculumError
+          ? err.message
+          : "커리큘럼 생성 중 문제가 발생했어요. 잠시 후 다시 시도해주세요."
+      );
+    }
   };
 
   return (
@@ -330,8 +380,93 @@ export function DogProfileForm() {
           </CardContent>
         </Card>
 
+        <Card>
+          <CardHeader>
+            <CardTitle>커리큘럼 생성 방식</CardTitle>
+          </CardHeader>
+          <CardContent className="flex flex-col gap-4">
+            <Controller
+              control={control}
+              name="generationMode"
+              render={({ field }) => (
+                <RadioGroup
+                  value={field.value}
+                  onValueChange={field.onChange}
+                  className="grid grid-cols-2 gap-3"
+                >
+                  <label className="flex flex-col gap-1 rounded-xl border border-input bg-sand px-3 py-3 text-sm">
+                    <span className="flex items-center gap-2 font-medium">
+                      <RadioGroupItem value="rule" id="mode-rule" />
+                      빠른 생성
+                    </span>
+                    <span className="pl-6 text-xs text-muted-foreground">규칙 기반 · 즉시 생성</span>
+                  </label>
+                  <label className="flex flex-col gap-1 rounded-xl border border-input bg-sand px-3 py-3 text-sm">
+                    <span className="flex items-center gap-2 font-medium">
+                      <RadioGroupItem value="ai" id="mode-ai" />
+                      <Sparkles className="h-3.5 w-3.5 text-cocoa" />
+                      AI 맞춤 생성
+                    </span>
+                    <span className="pl-6 text-xs text-muted-foreground">Gemini · 더 정교한 커리큘럼</span>
+                  </label>
+                </RadioGroup>
+              )}
+            />
+
+            {generationMode === "ai" && (
+              <div className="flex flex-col gap-1.5">
+                <Label htmlFor="apiKey">Gemini API 키 *</Label>
+                <div className="relative">
+                  <Input
+                    id="apiKey"
+                    type={showApiKey ? "text" : "password"}
+                    placeholder="AIza..."
+                    autoComplete="off"
+                    className="pr-10"
+                    {...register("apiKey")}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowApiKey((prev) => !prev)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground"
+                    aria-label={showApiKey ? "API 키 숨기기" : "API 키 표시"}
+                  >
+                    {showApiKey ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  </button>
+                </div>
+                {errors.apiKey && (
+                  <p className="text-xs text-destructive">{errors.apiKey.message}</p>
+                )}
+                <p className="text-xs text-muted-foreground">
+                  입력한 키는 서버로 전송되지 않고 이 브라우저에만 저장되며, Google Gemini API로
+                  직접 요청할 때만 사용돼요.{" "}
+                  <a
+                    href="https://aistudio.google.com/app/apikey"
+                    target="_blank"
+                    rel="noreferrer"
+                    className="text-cocoa underline"
+                  >
+                    Google AI Studio에서 무료로 발급받기
+                  </a>
+                </p>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {submitError && (
+          <div className="flex items-start gap-2 rounded-xl border border-destructive/40 bg-destructive/10 px-4 py-3 text-sm text-destructive">
+            <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
+            <p>{submitError}</p>
+          </div>
+        )}
+
         <Button type="submit" size="lg" disabled={isSubmitting} className="mt-2">
-          {isSubmitting ? "생성 중..." : "7일 커리큘럼 만들기"}
+          {isSubmitting
+            ? generationMode === "ai"
+              ? "AI가 커리큘럼을 만들고 있어요..."
+              : "생성 중..."
+            : "7일 커리큘럼 만들기"}
         </Button>
       </form>
     </MotionDiv>

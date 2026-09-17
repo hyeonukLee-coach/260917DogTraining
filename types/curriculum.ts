@@ -1,5 +1,8 @@
 export type CurriculumType = "운동" | "교육" | "둘다";
 
+/** 커리큘럼 생성 방식: 규칙 기반 엔진 또는 Gemini AI */
+export type GenerationMode = "rule" | "ai";
+
 export type Gender = "수컷" | "암컷";
 
 export type ActivityLevel = "낮음" | "보통" | "높음";
@@ -59,4 +62,6 @@ export interface GeneratedCurriculum {
   days: CurriculumDay[];
   needsVetNotice: boolean;
   createdAt: string;
+  /** 이 커리큘럼이 규칙 기반 엔진과 AI 중 무엇으로 만들어졌는지 */
+  source: GenerationMode;
 }
