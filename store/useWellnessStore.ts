@@ -10,6 +10,7 @@ import {
   getDog,
   getGeminiApiKey,
   getMissionRecords,
+  getOrCreateUser,
   getPlan,
   saveActivations,
   saveDog,
@@ -22,6 +23,7 @@ import {
   Dog,
   GenerationMode,
   MissionRecord,
+  User,
   WellnessPlan,
 } from "@/types/wellness";
 
@@ -33,6 +35,7 @@ interface SubmitOptions {
 }
 
 interface WellnessStore {
+  user: User | null;
   dog: Dog | null;
   plan: WellnessPlan | null;
   activations: CourseActivation[];
@@ -49,6 +52,7 @@ interface WellnessStore {
 }
 
 export const useWellnessStore = create<WellnessStore>((set, get) => ({
+  user: null,
   dog: null,
   plan: null,
   activations: [],
@@ -58,6 +62,7 @@ export const useWellnessStore = create<WellnessStore>((set, get) => ({
 
   hydrate: () => {
     set({
+      user: getOrCreateUser(),
       dog: getDog(),
       plan: getPlan(),
       activations: getActivations(),
