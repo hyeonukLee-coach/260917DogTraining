@@ -1,4 +1,10 @@
-import { DogProfile, GeneratedCurriculum } from "@/types/curriculum";
+import {
+  CourseActivation,
+  Dog,
+  MissionRecord,
+  User,
+  WellnessPlan,
+} from "@/types/wellness";
 
 /**
  * 브라우저 localStorage를 이용한 저장소 계층.
@@ -6,9 +12,12 @@ import { DogProfile, GeneratedCurriculum } from "@/types/curriculum";
  */
 
 const STORAGE_KEYS = {
-  PROFILE: "dog-curriculum:profile",
-  CURRICULUM: "dog-curriculum:curriculum",
-  GEMINI_API_KEY: "dog-curriculum:gemini-api-key",
+  USER: "unipaws:user",
+  DOG: "unipaws:dog",
+  PLAN: "unipaws:plan",
+  ACTIVATIONS: "unipaws:activations",
+  RECORDS: "unipaws:records",
+  GEMINI_API_KEY: "unipaws:gemini-api-key",
 } as const;
 
 function isBrowser(): boolean {
@@ -42,26 +51,53 @@ export function generateId(): string {
   return `id-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
 }
 
-export function saveDogProfile(profile: DogProfile): void {
-  writeJSON(STORAGE_KEYS.PROFILE, profile);
+/** 로그인 없는 로컬 사용자. 최초 방문 시 한 번 생성되어 계속 재사용된다 */
+export function getOrCreateUser(): User {
+  const existing = readJSON<User>(STORAGE_KEYS.USER);
+  if (existing) return existing;
+  const user: User = { id: generateId(), createdAt: new Date().toISOString() };
+  writeJSON(STORAGE_KEYS.USER, user);
+  return user;
 }
 
-export function getDogProfile(): DogProfile | null {
-  return readJSON<DogProfile>(STORAGE_KEYS.PROFILE);
+export function saveDog(dog: Dog): void {
+  writeJSON(STORAGE_KEYS.DOG, dog);
 }
 
-export function saveCurriculum(curriculum: GeneratedCurriculum): void {
-  writeJSON(STORAGE_KEYS.CURRICULUM, curriculum);
+export function getDog(): Dog | null {
+  return readJSON<Dog>(STORAGE_KEYS.DOG);
 }
 
-export function getCurriculum(): GeneratedCurriculum | null {
-  return readJSON<GeneratedCurriculum>(STORAGE_KEYS.CURRICULUM);
+export function savePlan(plan: WellnessPlan): void {
+  writeJSON(STORAGE_KEYS.PLAN, plan);
+}
+
+export function getPlan(): WellnessPlan | null {
+  return readJSON<WellnessPlan>(STORAGE_KEYS.PLAN);
+}
+
+export function saveActivations(activations: CourseActivation[]): void {
+  writeJSON(STORAGE_KEYS.ACTIVATIONS, activations);
+}
+
+export function getActivations(): CourseActivation[] {
+  return readJSON<CourseActivation[]>(STORAGE_KEYS.ACTIVATIONS) ?? [];
+}
+
+export function saveMissionRecords(records: MissionRecord[]): void {
+  writeJSON(STORAGE_KEYS.RECORDS, records);
+}
+
+export function getMissionRecords(): MissionRecord[] {
+  return readJSON<MissionRecord[]>(STORAGE_KEYS.RECORDS) ?? [];
 }
 
 export function clearAll(): void {
   if (!isBrowser()) return;
-  window.localStorage.removeItem(STORAGE_KEYS.PROFILE);
-  window.localStorage.removeItem(STORAGE_KEYS.CURRICULUM);
+  window.localStorage.removeItem(STORAGE_KEYS.DOG);
+  window.localStorage.removeItem(STORAGE_KEYS.PLAN);
+  window.localStorage.removeItem(STORAGE_KEYS.ACTIVATIONS);
+  window.localStorage.removeItem(STORAGE_KEYS.RECORDS);
 }
 
 /**

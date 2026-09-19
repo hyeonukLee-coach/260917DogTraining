@@ -1,13 +1,13 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Controller, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { AlertCircle, Eye, EyeOff, Sparkles } from "lucide-react";
+import { AlertCircle, Camera, Check, Eye, EyeOff, Sparkles, X } from "lucide-react";
 
-import { AICurriculumError } from "@/lib/aiCurriculumEngine";
+import { AIAnalysisError } from "@/lib/recommendation/aiEngine";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -22,9 +22,10 @@ import {
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { cn } from "@/lib/utils";
 import { fadeInProps, MotionDiv } from "@/components/motion";
-import { useCurriculumStore, DogProfileInput } from "@/store/useCurriculumStore";
-import { ActivityLevel, CurriculumType, Gender } from "@/types/curriculum";
+import { useWellnessStore, DogInput } from "@/store/useWellnessStore";
+import { ActivityLevel, Gender, WellnessGoal, WELLNESS_GOALS } from "@/types/wellness";
 
 const formSchema = z
   .object({
@@ -36,11 +37,13 @@ const formSchema = z
     gender: z.string().optional(),
     weightKg: z.string().optional(),
     neutered: z.boolean().optional(),
+    healthConditions: z.string().optional(),
     activityLevel: z.string().optional(),
     dailyWalkMinutes: z.string().optional(),
     behaviorConcerns: z.string().optional(),
     physicalConcerns: z.string().optional(),
-    curriculumType: z.string().min(1, "커리큘럼 유형을 선택해주세요"),
+    goals: z.array(z.string()).min(1, "목표를 1개 이상 선택해주세요"),
+    photoDataUrl: z.string().optional(),
     generationMode: z.enum(["rule", "ai"]),
     apiKey: z.string().optional(),
   })
@@ -51,19 +54,8 @@ const formSchema = z
     if (data.ageInputMode === "age" && !data.ageYears) {
       ctx.addIssue({ code: "custom", path: ["ageYears"], message: "나이를 입력해주세요" });
     }
-    if (!["운동", "교육", "둘다"].includes(data.curriculumType)) {
-      ctx.addIssue({
-        code: "custom",
-        path: ["curriculumType"],
-        message: "커리큘럼 유형을 선택해주세요",
-      });
-    }
     if (data.generationMode === "ai" && !data.apiKey?.trim()) {
-      ctx.addIssue({
-        code: "custom",
-        path: ["apiKey"],
-        message: "Gemini API 키를 입력해주세요",
-      });
+      ctx.addIssue({ code: "custom", path: ["apiKey"], message: "Gemini API 키를 입력해주세요" });
     }
   });
 
@@ -78,14 +70,18 @@ const defaultValues: FormValues = {
   gender: "",
   weightKg: "",
   neutered: false,
+  healthConditions: "",
   activityLevel: "",
   dailyWalkMinutes: "",
   behaviorConcerns: "",
   physicalConcerns: "",
-  curriculumType: "",
+  goals: [],
+  photoDataUrl: "",
   generationMode: "rule",
   apiKey: "",
 };
+
+const MAX_PHOTO_BYTES = 2 * 1024 * 1024; // 2MB
 
 function parseOptionalNumber(value?: string): number | undefined {
   if (!value || value.trim().length === 0) return undefined;
@@ -93,16 +89,27 @@ function parseOptionalNumber(value?: string): number | undefined {
   return Number.isNaN(parsed) ? undefined : parsed;
 }
 
-export function DogProfileForm() {
+function readFileAsDataUrl(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result as string);
+    reader.onerror = () => reject(reader.error);
+    reader.readAsDataURL(file);
+  });
+}
+
+export function ProfileForm() {
   const router = useRouter();
-  const submitProfile = useCurriculumStore((state) => state.submitProfile);
-  const setApiKey = useCurriculumStore((state) => state.setApiKey);
-  const storedApiKey = useCurriculumStore((state) => state.apiKey);
-  const isHydrated = useCurriculumStore((state) => state.isHydrated);
-  const hydrate = useCurriculumStore((state) => state.hydrate);
+  const submitDog = useWellnessStore((state) => state.submitDog);
+  const setApiKey = useWellnessStore((state) => state.setApiKey);
+  const storedApiKey = useWellnessStore((state) => state.apiKey);
+  const isHydrated = useWellnessStore((state) => state.isHydrated);
+  const hydrate = useWellnessStore((state) => state.hydrate);
 
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [showApiKey, setShowApiKey] = useState(false);
+  const [photoError, setPhotoError] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const {
     register,
@@ -118,6 +125,8 @@ export function DogProfileForm() {
 
   const ageInputMode = watch("ageInputMode");
   const generationMode = watch("generationMode");
+  const goals = watch("goals");
+  const photoDataUrl = watch("photoDataUrl");
 
   useEffect(() => {
     hydrate();
@@ -129,10 +138,32 @@ export function DogProfileForm() {
     }
   }, [isHydrated, storedApiKey, setValue]);
 
+  const handlePhotoChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    setPhotoError(null);
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith("image/")) {
+      setPhotoError("이미지 파일만 업로드할 수 있어요.");
+      return;
+    }
+    if (file.size > MAX_PHOTO_BYTES) {
+      setPhotoError("2MB 이하의 사진만 업로드할 수 있어요.");
+      return;
+    }
+
+    try {
+      const dataUrl = await readFileAsDataUrl(file);
+      setValue("photoDataUrl", dataUrl);
+    } catch {
+      setPhotoError("사진을 불러오지 못했어요. 다시 시도해주세요.");
+    }
+  };
+
   const onSubmit = async (values: FormValues) => {
     setSubmitError(null);
 
-    const input: DogProfileInput = {
+    const input: DogInput = {
       name: values.name.trim(),
       birthDate: values.ageInputMode === "birthDate" ? values.birthDate : undefined,
       ageYears: values.ageInputMode === "age" ? parseOptionalNumber(values.ageYears) : undefined,
@@ -140,11 +171,13 @@ export function DogProfileForm() {
       gender: (values.gender || undefined) as Gender | undefined,
       weightKg: parseOptionalNumber(values.weightKg),
       neutered: values.neutered,
+      healthConditions: values.healthConditions?.trim() || undefined,
       activityLevel: (values.activityLevel || undefined) as ActivityLevel | undefined,
       dailyWalkMinutes: parseOptionalNumber(values.dailyWalkMinutes),
       behaviorConcerns: values.behaviorConcerns?.trim() || undefined,
       physicalConcerns: values.physicalConcerns?.trim() || undefined,
-      curriculumType: values.curriculumType as CurriculumType,
+      goals: values.goals as WellnessGoal[],
+      photoDataUrl: values.photoDataUrl?.trim() || undefined,
     };
 
     if (values.generationMode === "ai" && values.apiKey?.trim()) {
@@ -152,16 +185,16 @@ export function DogProfileForm() {
     }
 
     try {
-      await submitProfile(input, {
+      await submitDog(input, {
         mode: values.generationMode,
         apiKey: values.apiKey?.trim(),
       });
-      router.push("/result");
+      router.push("/analysis");
     } catch (err) {
       setSubmitError(
-        err instanceof AICurriculumError
+        err instanceof AIAnalysisError
           ? err.message
-          : "커리큘럼 생성 중 문제가 발생했어요. 잠시 후 다시 시도해주세요."
+          : "분석 중 문제가 발생했어요. 잠시 후 다시 시도해주세요."
       );
     }
   };
@@ -174,6 +207,56 @@ export function DogProfileForm() {
             <CardTitle>기본 정보</CardTitle>
           </CardHeader>
           <CardContent className="flex flex-col gap-5">
+            <div className="flex items-center gap-4">
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                className="relative flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-full border border-input bg-sand text-muted-foreground"
+                aria-label="반려견 사진 선택"
+              >
+                {photoDataUrl ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={photoDataUrl} alt="반려견 사진 미리보기" className="h-full w-full object-cover" />
+                ) : (
+                  <Camera className="h-6 w-6" />
+                )}
+              </button>
+              <div className="flex flex-col gap-1">
+                <Label>반려견 사진 (선택)</Label>
+                <div className="flex items-center gap-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => fileInputRef.current?.click()}
+                  >
+                    사진 선택
+                  </Button>
+                  {photoDataUrl && (
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setValue("photoDataUrl", "")}
+                    >
+                      제거
+                    </Button>
+                  )}
+                </div>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={handlePhotoChange}
+                />
+                {photoError && <p className="text-xs text-destructive">{photoError}</p>}
+                <p className="text-xs text-muted-foreground">
+                  이 브라우저에만 저장되고 서버로 전송되지 않아요.
+                </p>
+              </div>
+            </div>
+
             <div className="flex flex-col gap-1.5">
               <Label htmlFor="name">이름 *</Label>
               <Input id="name" placeholder="예: 초코" {...register("name")} />
@@ -279,12 +362,17 @@ export function DogProfileForm() {
                 control={control}
                 name="neutered"
                 render={({ field }) => (
-                  <Switch
-                    id="neutered"
-                    checked={field.value}
-                    onCheckedChange={field.onChange}
-                  />
+                  <Switch id="neutered" checked={field.value} onCheckedChange={field.onChange} />
                 )}
+              />
+            </div>
+
+            <div className="flex flex-col gap-1.5">
+              <Label htmlFor="healthConditions">현재 질환/건강 특이사항 (선택)</Label>
+              <Textarea
+                id="healthConditions"
+                placeholder="예: 슬개골 탈구 진단을 받은 적이 있어요"
+                {...register("healthConditions")}
               />
             </div>
           </CardContent>
@@ -329,7 +417,7 @@ export function DogProfileForm() {
             </div>
 
             <div className="flex flex-col gap-1.5">
-              <Label htmlFor="behaviorConcerns">행동 고민 (선택)</Label>
+              <Label htmlFor="behaviorConcerns">보호자가 느끼는 행동 고민 (선택)</Label>
               <Textarea
                 id="behaviorConcerns"
                 placeholder="예: 산책 중 다른 개를 보면 짖어요"
@@ -350,39 +438,72 @@ export function DogProfileForm() {
 
         <Card>
           <CardHeader>
-            <CardTitle>커리큘럼 유형 *</CardTitle>
+            <CardTitle>보호자가 원하는 목표 * (1개 이상)</CardTitle>
           </CardHeader>
           <CardContent>
             <Controller
               control={control}
-              name="curriculumType"
+              name="goals"
               render={({ field }) => (
-                <RadioGroup
-                  value={field.value}
-                  onValueChange={field.onChange}
-                  className="grid grid-cols-3 gap-3"
-                >
-                  {(["운동", "교육", "둘다"] as const).map((type) => (
-                    <label
-                      key={type}
-                      className="flex flex-col items-center gap-2 rounded-xl border border-input bg-sand px-3 py-3 text-sm font-medium"
-                    >
-                      <RadioGroupItem value={type} id={`curriculum-${type}`} />
-                      {type}
-                    </label>
-                  ))}
-                </RadioGroup>
+                <div className="grid grid-cols-3 gap-2">
+                  {WELLNESS_GOALS.map((goal) => {
+                    const active = field.value.includes(goal);
+                    return (
+                      <button
+                        key={goal}
+                        type="button"
+                        onClick={() =>
+                          field.onChange(
+                            active
+                              ? field.value.filter((g: string) => g !== goal)
+                              : [...field.value, goal]
+                          )
+                        }
+                        className={cn(
+                          "flex items-center justify-center gap-1 rounded-xl border px-2 py-2.5 text-xs font-medium transition-colors",
+                          active
+                            ? "border-cocoa bg-cocoa/15 text-cocoa"
+                            : "border-input bg-sand text-muted-foreground"
+                        )}
+                      >
+                        {active && <Check className="h-3 w-3 shrink-0" />}
+                        {goal}
+                      </button>
+                    );
+                  })}
+                </div>
               )}
             />
-            {errors.curriculumType && (
-              <p className="mt-2 text-xs text-destructive">{errors.curriculumType.message}</p>
+            {errors.goals && (
+              <p className="mt-2 text-xs text-destructive">{errors.goals.message}</p>
+            )}
+            {goals.length > 0 && (
+              <div className="mt-3 flex flex-wrap gap-1.5">
+                {goals.map((goal) => (
+                  <span
+                    key={goal}
+                    className="inline-flex items-center gap-1 rounded-full bg-muted px-2.5 py-0.5 text-xs text-muted-foreground"
+                  >
+                    {goal}
+                    <X
+                      className="h-3 w-3 cursor-pointer"
+                      onClick={() =>
+                        setValue(
+                          "goals",
+                          goals.filter((g) => g !== goal)
+                        )
+                      }
+                    />
+                  </span>
+                ))}
+              </div>
             )}
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader>
-            <CardTitle>커리큘럼 생성 방식</CardTitle>
+            <CardTitle>웰니스 분석 방식</CardTitle>
           </CardHeader>
           <CardContent className="flex flex-col gap-4">
             <Controller
@@ -397,7 +518,7 @@ export function DogProfileForm() {
                   <label className="flex flex-col gap-1 rounded-xl border border-input bg-sand px-3 py-3 text-sm">
                     <span className="flex items-center gap-2 font-medium">
                       <RadioGroupItem value="rule" id="mode-rule" />
-                      빠른 생성
+                      빠른 분석
                     </span>
                     <span className="pl-6 text-xs text-muted-foreground">규칙 기반 · 즉시 생성</span>
                   </label>
@@ -405,9 +526,9 @@ export function DogProfileForm() {
                     <span className="flex items-center gap-2 font-medium">
                       <RadioGroupItem value="ai" id="mode-ai" />
                       <Sparkles className="h-3.5 w-3.5 text-cocoa" />
-                      AI 맞춤 생성
+                      AI 정밀 분석
                     </span>
-                    <span className="pl-6 text-xs text-muted-foreground">Gemini · 더 정교한 커리큘럼</span>
+                    <span className="pl-6 text-xs text-muted-foreground">Gemini · 더 정교한 플랜</span>
                   </label>
                 </RadioGroup>
               )}
@@ -434,9 +555,7 @@ export function DogProfileForm() {
                     {showApiKey ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                   </button>
                 </div>
-                {errors.apiKey && (
-                  <p className="text-xs text-destructive">{errors.apiKey.message}</p>
-                )}
+                {errors.apiKey && <p className="text-xs text-destructive">{errors.apiKey.message}</p>}
                 <p className="text-xs text-muted-foreground">
                   입력한 키는 서버로 전송되지 않고 이 브라우저에만 저장되며, Google Gemini API로
                   직접 요청할 때만 사용돼요.{" "}
@@ -464,9 +583,9 @@ export function DogProfileForm() {
         <Button type="submit" size="lg" disabled={isSubmitting} className="mt-2">
           {isSubmitting
             ? generationMode === "ai"
-              ? "AI가 커리큘럼을 만들고 있어요..."
-              : "생성 중..."
-            : "7일 커리큘럼 만들기"}
+              ? "AI가 분석하고 있어요..."
+              : "분석 중..."
+            : "웰니스 분석 시작하기"}
         </Button>
       </form>
     </MotionDiv>

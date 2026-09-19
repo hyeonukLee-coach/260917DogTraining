@@ -2,8 +2,8 @@ import type { Metadata, Viewport } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "반려견 웰니스 커리큘럼",
-  description: "반려견 정보를 입력하면 맞춤 운동·교육 커리큘럼을 7일치로 만들어드려요.",
+  title: "UNIPAWS AI WELLNESS",
+  description: "반려견 정보를 입력하면 AI가 맞춤 웰니스 플랜과 오늘의 미션을 제안해드려요.",
 };
 
 export const viewport: Viewport = {
