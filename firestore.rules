@@ -1,0 +1,79 @@
+rules_version = '2';
+
+// Spark(무료) 요금제 전제: Cloud Functions 없이 규칙만으로 접근을 통제한다.
+// 좋아요/댓글 수는 서버 카운터 대신 클라이언트에서 getCountFromServer로
+// 집계하므로, 여기서 카운터 위조를 막는 규칙은 필요 없다.
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(uid) {
+      return isSignedIn() && request.auth.uid == uid;
+    }
+
+    function unchanged(field) {
+      return request.resource.data[field] == resource.data[field];
+    }
+
+    // 사용자 프로필: 누구나 읽을 수 있고(작성자 표시용), 본인만 만들고 갱신할 수 있다.
+    // isTrainer는 최초 생성 시 false로 고정되고 이후에는 클라이언트가 절대 바꿀 수 없다
+    // (운영자가 Firebase 콘솔에서 직접 true로 바꿔줘야 훈련사 배지가 붙는다).
+    match /users/{uid} {
+      allow read: if true;
+      allow create: if isOwner(uid) && request.resource.data.isTrainer == false;
+      allow update: if isOwner(uid) && unchanged('isTrainer');
+      allow delete: if false;
+    }
+
+    // 교육 영상 카탈로그: 누구나 읽을 수 있지만 클라이언트에서는 쓸 수 없다.
+    // (Firebase 콘솔 또는 scripts/seedTrainingVideos.mjs의 Admin SDK로만 관리)
+    match /trainingVideos/{videoId} {
+      allow read: if true;
+      allow write: if false;
+    }
+
+    match /posts/{postId} {
+      allow read: if true;
+
+      allow create: if isSignedIn()
+        && request.resource.data.authorUid == request.auth.uid
+        && request.resource.data.type in ['mission', 'free', 'question', 'achievement']
+        && request.resource.data.title is string
+        && request.resource.data.title.size() > 0
+        && request.resource.data.title.size() <= 100
+        && request.resource.data.content is string
+        && request.resource.data.content.size() <= 4000
+        && request.resource.data.resolved == false;
+
+      // 작성자만, 그리고 소유권·작성자·종류·작성시각은 바꿀 수 없게 수정을 허용한다.
+      allow update: if isSignedIn()
+        && resource.data.authorUid == request.auth.uid
+        && unchanged('authorUid')
+        && unchanged('type')
+        && unchanged('createdAt');
+
+      allow delete: if isSignedIn() && resource.data.authorUid == request.auth.uid;
+
+      match /likes/{uid} {
+        allow read: if true;
+        allow create: if isOwner(uid);
+        allow delete: if isOwner(uid);
+        allow update: if false;
+      }
+
+      match /comments/{commentId} {
+        allow read: if true;
+        allow create: if isSignedIn()
+          && request.resource.data.authorUid == request.auth.uid
+          && request.resource.data.text is string
+          && request.resource.data.text.size() > 0
+          && request.resource.data.text.size() <= 1000;
+        allow update: if false;
+        allow delete: if isSignedIn() && resource.data.authorUid == request.auth.uid;
+      }
+    }
+  }
+}

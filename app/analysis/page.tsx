@@ -115,8 +115,11 @@ export default function AnalysisPage() {
         <CardHeader>
           <CardTitle>추천 교육</CardTitle>
         </CardHeader>
-        <CardContent>
+        <CardContent className="flex flex-col gap-3">
           <p className="text-sm text-muted-foreground">{assessment.recommendedEducationSummary}</p>
+          <Button type="button" variant="outline" size="sm" className="self-start" onClick={() => router.push("/education-videos")}>
+            4주·8주 교육 영상 프로그램 보기
+          </Button>
         </CardContent>
       </Card>
 

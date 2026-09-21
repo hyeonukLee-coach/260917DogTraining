@@ -1,3 +1,4 @@
+import { VideoProgramState } from "@/types/community";
 import {
   CourseActivation,
   Dog,
@@ -18,6 +19,7 @@ const STORAGE_KEYS = {
   ACTIVATIONS: "unipaws:activations",
   RECORDS: "unipaws:records",
   GEMINI_API_KEY: "unipaws:gemini-api-key",
+  VIDEO_PROGRAMS: "unipaws:video-programs",
 } as const;
 
 function isBrowser(): boolean {
@@ -92,12 +94,25 @@ export function getMissionRecords(): MissionRecord[] {
   return readJSON<MissionRecord[]>(STORAGE_KEYS.RECORDS) ?? [];
 }
 
+/** courseId를 키로 하는 영상 프로그램 진행 상태 저장소 */
+export function saveVideoProgramState(courseId: string, state: VideoProgramState): void {
+  const all = readJSON<Record<string, VideoProgramState>>(STORAGE_KEYS.VIDEO_PROGRAMS) ?? {};
+  all[courseId] = state;
+  writeJSON(STORAGE_KEYS.VIDEO_PROGRAMS, all);
+}
+
+export function getVideoProgramState(courseId: string): VideoProgramState | null {
+  const all = readJSON<Record<string, VideoProgramState>>(STORAGE_KEYS.VIDEO_PROGRAMS) ?? {};
+  return all[courseId] ?? null;
+}
+
 export function clearAll(): void {
   if (!isBrowser()) return;
   window.localStorage.removeItem(STORAGE_KEYS.DOG);
   window.localStorage.removeItem(STORAGE_KEYS.PLAN);
   window.localStorage.removeItem(STORAGE_KEYS.ACTIVATIONS);
   window.localStorage.removeItem(STORAGE_KEYS.RECORDS);
+  window.localStorage.removeItem(STORAGE_KEYS.VIDEO_PROGRAMS);
 }
 
 /**

@@ -1,4 +1,5 @@
 import { generateId } from "@/lib/dataStore";
+import { buildCyclicSequence } from "@/lib/recommendation/sequence";
 import {
   educationTemplates,
   exerciseTemplates,
@@ -155,25 +156,6 @@ function buildSortedPool(
   return [...pool].sort((a, b) => scoreTemplate(b, targetTags) - scoreTemplate(a, targetTags));
 }
 
-/**
- * 정렬된 풀을 이용해 필요한 길이만큼의 시퀀스를 만든다.
- * 점수가 높은 항목이 더 자주 등장하되, 매 바퀴(lap)마다 시작 위치를 옮겨
- * 같은 항목이 매번 같은 자리에서 반복되지 않도록 한다.
- */
-function buildSequence(pool: MissionTemplate[], length: number): MissionTemplate[] {
-  if (pool.length === 0) return [];
-  const sequence: MissionTemplate[] = [];
-  let lap = 0;
-  while (sequence.length < length) {
-    const offset = lap % pool.length;
-    for (let i = 0; i < pool.length && sequence.length < length; i++) {
-      sequence.push(pool[(i + offset) % pool.length]);
-    }
-    lap++;
-  }
-  return sequence;
-}
-
 interface CourseCopy {
   title: string;
   description: string;
@@ -264,7 +246,7 @@ function buildCourse(
   rankedGoals: WellnessGoal[]
 ): RecommendedCourse {
   const pool = buildSortedPool(templates, targetTags, maxDifficulty);
-  const sequence = buildSequence(pool, COURSE_LENGTH_DAYS);
+  const sequence = buildCyclicSequence(pool, COURSE_LENGTH_DAYS);
 
   const missions: Mission[] = sequence.map((template, index) => ({
     ...template,

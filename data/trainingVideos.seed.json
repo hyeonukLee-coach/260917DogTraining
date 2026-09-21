@@ -1,0 +1,187 @@
+[
+  {
+    "id": "edu-w1-relationship",
+    "title": "강아지 이름 반응·눈맞춤 훈련 모음",
+    "url": "https://www.youtube.com/results?search_query=%EA%B0%95%EC%95%84%EC%A7%80+%EC%9D%B4%EB%A6%84+%EB%B0%98%EC%9D%91+%EB%88%88%EB%A7%9E%EC%B6%A4+%ED%9B%88%EB%A0%A8",
+    "category": "교육",
+    "weekNumber": 1,
+    "purposeTags": [
+      "관계형성",
+      "집중력향상"
+    ],
+    "description": "이름을 부르면 나를 바라보는 습관부터 시작해요."
+  },
+  {
+    "id": "edu-w1-sit",
+    "title": "강아지 기초 복종훈련 '앉아' 모음",
+    "url": "https://www.youtube.com/results?search_query=%EA%B0%95%EC%95%84%EC%A7%80+%EC%95%89%EC%95%84+%ED%9B%88%EB%A0%A8%EB%B2%95",
+    "category": "교육",
+    "weekNumber": 1,
+    "purposeTags": [
+      "행동교육"
+    ],
+    "description": "모든 훈련의 기본이 되는 '앉아' 명령을 연습해요."
+  },
+  {
+    "id": "edu-w2-clicker",
+    "title": "강아지 클리커 트레이닝 기초 모음",
+    "url": "https://www.youtube.com/results?search_query=%EA%B0%95%EC%95%84%EC%A7%80+%ED%81%B4%EB%A6%AC%EC%BB%A4+%ED%8A%B8%EB%A0%88%EC%9D%B4%EB%8B%9D+%EA%B8%B0%EC%B4%88",
+    "category": "교육",
+    "weekNumber": 2,
+    "purposeTags": [
+      "행동교육",
+      "집중력향상"
+    ],
+    "description": "보상 타이밍을 정확히 알려주는 클리커 훈련을 배워요."
+  },
+  {
+    "id": "edu-w2-wait",
+    "title": "강아지 '기다려' 훈련 모음",
+    "url": "https://www.youtube.com/results?search_query=%EA%B0%95%EC%95%84%EC%A7%80+%EA%B8%B0%EB%8B%A4%EB%A0%A4+%ED%9B%88%EB%A0%A8%EB%B2%95",
+    "category": "교육",
+    "weekNumber": 2,
+    "purposeTags": [
+      "행동교육"
+    ],
+    "description": "충동 조절 능력을 키우는 '기다려' 훈련이에요."
+  },
+  {
+    "id": "edu-w3-barking",
+    "title": "강아지 짖음 교정 훈련 모음",
+    "url": "https://www.youtube.com/results?search_query=%EA%B0%95%EC%95%84%EC%A7%80+%EC%A7%96%EC%9D%8C+%EA%B5%90%EC%A0%95+%ED%9B%88%EB%A0%A8",
+    "category": "교육",
+    "weekNumber": 3,
+    "purposeTags": [
+      "행동교육",
+      "정서적안정"
+    ],
+    "description": "과도한 짖음의 원인을 파악하고 대체 행동을 알려줘요."
+  },
+  {
+    "id": "edu-w3-separation",
+    "title": "강아지 분리불안 극복 훈련 모음",
+    "url": "https://www.youtube.com/results?search_query=%EA%B0%95%EC%95%84%EC%A7%80+%EB%B6%84%EB%A6%AC%EB%B6%88%EC%95%88+%EA%B7%B9%EB%B3%B5+%ED%9B%88%EB%A0%A8",
+    "category": "교육",
+    "weekNumber": 3,
+    "purposeTags": [
+      "정서적안정"
+    ],
+    "description": "혼자 있는 시간에 익숙해지는 연습이에요."
+  },
+  {
+    "id": "edu-w4-socialization-walk",
+    "title": "강아지 사회화 산책 훈련 모음",
+    "url": "https://www.youtube.com/results?search_query=%EA%B0%95%EC%95%84%EC%A7%80+%EC%82%AC%ED%9A%8C%ED%99%94+%ED%9B%88%EB%A0%A8+%EC%82%B0%EC%B1%85",
+    "category": "교육",
+    "weekNumber": 4,
+    "purposeTags": [
+      "사회화",
+      "정서적안정"
+    ],
+    "description": "새로운 환경과 소리에 익숙해지는 산책 훈련이에요."
+  },
+  {
+    "id": "edu-w4-greeting",
+    "title": "강아지 다른 개와 인사 예절 훈련 모음",
+    "url": "https://www.youtube.com/results?search_query=%EA%B0%95%EC%95%84%EC%A7%80+%EB%8B%A4%EB%A5%B8+%EA%B0%9C+%EC%9D%B8%EC%82%AC+%ED%9B%88%EB%A0%A8",
+    "category": "교육",
+    "weekNumber": 4,
+    "purposeTags": [
+      "사회화"
+    ],
+    "description": "다른 강아지와 안전하게 인사하는 방법을 배워요."
+  },
+  {
+    "id": "edu-w5-bonding-play",
+    "title": "보호자와 유대감 쌓는 놀이 훈련 모음",
+    "url": "https://www.youtube.com/results?search_query=%EA%B0%95%EC%95%84%EC%A7%80+%EB%B3%B4%ED%98%B8%EC%9E%90+%EC%9C%A0%EB%8C%80%EA%B0%90+%EB%86%80%EC%9D%B4+%ED%9B%88%EB%A0%A8",
+    "category": "교육",
+    "weekNumber": 5,
+    "purposeTags": [
+      "관계형성",
+      "정서적안정"
+    ],
+    "description": "놀이를 통해 보호자에 대한 신뢰를 키워요."
+  },
+  {
+    "id": "edu-w5-senior-brain",
+    "title": "노령견 인지 자극 훈련 모음",
+    "url": "https://www.youtube.com/results?search_query=%EB%85%B8%EB%A0%B9%EA%B2%AC+%EC%9D%B8%EC%A7%80+%EC%9E%90%EA%B7%B9+%ED%9B%88%EB%A0%A8",
+    "category": "교육",
+    "weekNumber": 5,
+    "purposeTags": [
+      "시니어관리",
+      "집중력향상"
+    ],
+    "description": "나이 든 반려견의 인지 활력을 지켜주는 훈련이에요."
+  },
+  {
+    "id": "edu-w6-fetch",
+    "title": "강아지 물건 가져오기 훈련 모음",
+    "url": "https://www.youtube.com/results?search_query=%EA%B0%95%EC%95%84%EC%A7%80+%EB%AC%BC%EA%B1%B4+%EA%B0%80%EC%A0%B8%EC%98%A4%EA%B8%B0+%ED%9B%88%EB%A0%A8",
+    "category": "교육",
+    "weekNumber": 6,
+    "purposeTags": [
+      "집중력향상",
+      "행동교육"
+    ],
+    "description": "집중력과 응용력을 함께 키우는 훈련이에요."
+  },
+  {
+    "id": "edu-w6-obedience-program",
+    "title": "강아지 기본 순종훈련 8주 프로그램 모음",
+    "url": "https://www.youtube.com/results?search_query=%EA%B0%95%EC%95%84%EC%A7%80+%EA%B8%B0%EB%B3%B8+%EC%88%9C%EC%A2%85%ED%9B%88%EB%A0%A8+8%EC%A3%BC+%ED%94%84%EB%A1%9C%EA%B7%B8%EB%9E%A8",
+    "category": "교육",
+    "weekNumber": 6,
+    "purposeTags": [
+      "행동교육"
+    ],
+    "description": "지금까지 배운 명령어들을 이어서 연습해요."
+  },
+  {
+    "id": "edu-w7-shyness",
+    "title": "강아지 낯가림 극복 훈련 모음",
+    "url": "https://www.youtube.com/results?search_query=%EA%B0%95%EC%95%84%EC%A7%80+%EB%82%AF%EA%B0%80%EB%A6%BC+%EA%B7%B9%EB%B3%B5+%ED%9B%88%EB%A0%A8",
+    "category": "교육",
+    "weekNumber": 7,
+    "purposeTags": [
+      "사회화",
+      "정서적안정"
+    ],
+    "description": "낯선 사람과 환경에 서서히 적응하는 연습이에요."
+  },
+  {
+    "id": "edu-w7-problem-behavior",
+    "title": "강아지 문제행동 교정 전문가 강의 모음",
+    "url": "https://www.youtube.com/results?search_query=%EA%B0%95%EC%95%84%EC%A7%80+%EB%AC%B8%EC%A0%9C%ED%96%89%EB%8F%99+%EA%B5%90%EC%A0%95+%EC%A0%84%EB%AC%B8%EA%B0%80+%EA%B0%95%EC%9D%98",
+    "category": "교육",
+    "weekNumber": 7,
+    "purposeTags": [
+      "행동교육"
+    ],
+    "description": "반복되는 문제행동을 전문가 시선으로 점검해요."
+  },
+  {
+    "id": "edu-w8-review-play",
+    "title": "강아지 훈련 복습 응용 놀이 모음",
+    "url": "https://www.youtube.com/results?search_query=%EA%B0%95%EC%95%84%EC%A7%80+%ED%9B%88%EB%A0%A8+%EB%B3%B5%EC%8A%B5+%EC%9D%91%EC%9A%A9+%EB%86%80%EC%9D%B4",
+    "category": "교육",
+    "weekNumber": 8,
+    "purposeTags": [
+      "집중력향상",
+      "관계형성"
+    ],
+    "description": "지금까지 배운 내용을 놀이로 응용해봐요."
+  },
+  {
+    "id": "edu-w8-checklist",
+    "title": "강아지 훈련 마무리 점검 체크리스트 모음",
+    "url": "https://www.youtube.com/results?search_query=%EA%B0%95%EC%95%84%EC%A7%80+%ED%9B%88%EB%A0%A8+%EB%A7%88%EB%AC%B4%EB%A6%AC+%EC%B2%B4%ED%81%AC%EB%A6%AC%EC%8A%A4%ED%8A%B8",
+    "category": "교육",
+    "weekNumber": 8,
+    "purposeTags": [
+      "행동교육"
+    ],
+    "description": "8주 과정을 마무리하며 배운 내용을 점검해요."
+  }
+]

@@ -2,7 +2,7 @@
 
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { Check } from "lucide-react";
+import { Check, Video } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -72,22 +72,35 @@ export default function CoursesPage() {
                       </span>
                     ))}
                   </div>
-                  <Button
-                    type="button"
-                    variant={started ? "secondary" : "default"}
-                    className="mt-1 self-start"
-                    onClick={() => activateCourses([course.id])}
-                    disabled={started}
-                  >
-                    {started ? (
-                      <span className="flex items-center gap-1.5">
-                        <Check className="h-4 w-4" />
-                        시작됨
-                      </span>
-                    ) : (
-                      "이 코스 시작하기"
+                  <div className="flex flex-wrap gap-2">
+                    <Button
+                      type="button"
+                      variant={started ? "secondary" : "default"}
+                      className="mt-1 self-start"
+                      onClick={() => activateCourses([course.id])}
+                      disabled={started}
+                    >
+                      {started ? (
+                        <span className="flex items-center gap-1.5">
+                          <Check className="h-4 w-4" />
+                          시작됨
+                        </span>
+                      ) : (
+                        "이 코스 시작하기"
+                      )}
+                    </Button>
+                    {course.category === "교육" && (
+                      <Button
+                        type="button"
+                        variant="outline"
+                        className="mt-1 self-start"
+                        onClick={() => router.push("/education-videos")}
+                      >
+                        <Video className="h-4 w-4" />
+                        교육 영상 프로그램 보기
+                      </Button>
                     )}
-                  </Button>
+                  </div>
                 </CardContent>
               </Card>
             </MotionDiv>

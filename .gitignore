@@ -21,6 +21,10 @@ yarn-error.log*
 .env*.local
 .env
 
+# firebase admin service account keys (scripts/seedTrainingVideos.mjs)
+serviceAccountKey.json
+*serviceAccountKey*.json
+
 # typescript
 *.tsbuildinfo
 next-env.d.ts

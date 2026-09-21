@@ -152,9 +152,12 @@ export default function ProgressPage() {
       <Button type="button" onClick={() => router.push("/missions")}>
         오늘의 미션으로 돌아가기
       </Button>
+      <Button type="button" variant="outline" onClick={() => router.push("/community")}>
+        커뮤니티 둘러보기
+      </Button>
       <Button
         type="button"
-        variant="outline"
+        variant="ghost"
         onClick={() => {
           reset();
           router.push("/");

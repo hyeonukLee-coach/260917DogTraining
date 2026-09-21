@@ -101,9 +101,14 @@ export default function MissionsPage() {
         ))}
       </div>
 
-      <Button type="button" variant="outline" onClick={() => router.push("/progress")}>
-        변화 기록 보러가기
-      </Button>
+      <div className="flex flex-col gap-2">
+        <Button type="button" variant="outline" onClick={() => router.push("/progress")}>
+          변화 기록 보러가기
+        </Button>
+        <Button type="button" variant="ghost" onClick={() => router.push("/community")}>
+          커뮤니티에 미션 인증 영상 올리기
+        </Button>
+      </div>
     </MotionDiv>
   );
 }

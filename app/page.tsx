@@ -29,11 +29,18 @@ export default function HomePage() {
         </p>
       </div>
 
-      <Link href="/profile" className="w-full">
-        <Button type="button" size="lg" className="w-full">
-          우리 강아지 웰니스 시작하기
-        </Button>
-      </Link>
+      <div className="flex w-full flex-col gap-2">
+        <Link href="/profile" className="w-full">
+          <Button type="button" size="lg" className="w-full">
+            우리 강아지 웰니스 시작하기
+          </Button>
+        </Link>
+        <Link href="/community" className="w-full">
+          <Button type="button" variant="outline" className="w-full">
+            커뮤니티 둘러보기
+          </Button>
+        </Link>
+      </div>
 
       <div className="grid w-full grid-cols-3 gap-3">
         {STATS.map(({ icon: Icon, label }) => (
