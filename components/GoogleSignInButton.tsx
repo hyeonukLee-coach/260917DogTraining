@@ -1,8 +1,10 @@
 "use client";
 
-import { LogOut } from "lucide-react";
+import Link from "next/link";
+import { LogOut, ShieldCheck } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import { isAdminEmail } from "@/lib/admin";
 import { useAuthStore } from "@/store/useAuthStore";
 
 export function GoogleSignInButton() {
@@ -35,6 +37,11 @@ export function GoogleSignInButton() {
             </span>
           )}
         </span>
+        {isAdminEmail(user.email) && (
+          <Link href="/admin" aria-label="관리자 페이지">
+            <ShieldCheck className="h-4 w-4 text-cocoa" />
+          </Link>
+        )}
         <Button type="button" variant="ghost" size="sm" onClick={() => void signOut()}>
           <LogOut className="h-4 w-4" />
         </Button>

@@ -18,6 +18,12 @@ service cloud.firestore {
       return request.resource.data[field] == resource.data[field];
     }
 
+    // 관리자 판별: 이 이메일 목록은 lib/admin.ts의 ADMIN_EMAILS와 항상 같아야 한다.
+    // Google 로그인 이메일은 Google이 검증하므로 클라이언트가 위조할 수 없다.
+    function isAdmin() {
+      return isSignedIn() && request.auth.token.email in ['wlwhso1227@gmail.com'];
+    }
+
     // 사용자 프로필: 누구나 읽을 수 있고(작성자 표시용), 본인만 만들고 갱신할 수 있다.
     // isTrainer는 최초 생성 시 false로 고정되고 이후에는 클라이언트가 절대 바꿀 수 없다
     // (운영자가 Firebase 콘솔에서 직접 true로 바꿔줘야 훈련사 배지가 붙는다).
@@ -33,6 +39,11 @@ service cloud.firestore {
     match /trainingVideos/{videoId} {
       allow read: if true;
       allow write: if false;
+    }
+
+    // 관리자 전용 메모(노션/워드 등에서 옮겨 적는 내부 정보). 관리자만 읽고 쓸 수 있다.
+    match /adminNotes/{noteId} {
+      allow read, write: if isAdmin();
     }
 
     match /posts/{postId} {
