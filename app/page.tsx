@@ -55,7 +55,7 @@ export default function HomePage() {
       </div>
 
       <p className="text-xs text-muted-foreground">
-        로그인 없이 3~5분이면 체험할 수 있어요. 입력한 정보는 이 브라우저에만 저장돼요.
+        Google 로그인 후 3~5분이면 체험할 수 있어요. 강아지 정보는 이 브라우저에만 저장돼요.
       </p>
     </main>
   );
