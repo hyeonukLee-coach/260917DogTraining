@@ -5,15 +5,16 @@ import { FirebaseApp, getApps, initializeApp } from "firebase/app";
  * 나타내는 공개 식별자다(공식 문서 기준). 실제 접근 제어는 Firestore 보안 규칙이
  * 담당하므로 그대로 커밋해도 안전하다.
  * https://firebase.google.com/docs/projects/api-keys
+ *
+ * Spark(무료) 요금제에서 Firestore + Authentication만 사용하므로, Storage/
+ * Cloud Messaging/Analytics 전용 필드(storageBucket, messagingSenderId,
+ * measurementId)는 의도적으로 넣지 않았다.
  */
 const firebaseConfig = {
   apiKey: "AIzaSyDHYMIq4I_kmNq2G-im9xbYlg62Ur9EA1M",
   authDomain: "dogtraining-ai.firebaseapp.com",
   projectId: "dogtraining-ai",
-  storageBucket: "dogtraining-ai.firebasestorage.app",
-  messagingSenderId: "937967817300",
   appId: "1:937967817300:web:18abd26524ded9fb3913c1",
-  measurementId: "G-JDNHRF766D",
 };
 
 export function getFirebaseApp(): FirebaseApp {
