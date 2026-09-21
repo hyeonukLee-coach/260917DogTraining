@@ -3,7 +3,6 @@
 import { Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 
-import { GoogleSignInButton } from "@/components/GoogleSignInButton";
 import { CommunityBoardList } from "@/components/community/CommunityBoardList";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { fadeInProps, MotionDiv } from "@/components/motion";
@@ -16,19 +15,19 @@ function CommunityPageContent() {
   const defaultTab: PostType = POST_TYPE_ORDER.includes(tabParam as PostType)
     ? (tabParam as PostType)
     : "mission";
-  const missionWeekParam = searchParams.get("week");
-  const missionWeek = missionWeekParam ? Number(missionWeekParam) : undefined;
-  const missionCourseTitle = searchParams.get("course") ?? undefined;
+  const dogId = searchParams.get("dogId") ?? undefined;
+  const dogName = searchParams.get("dogName") ?? undefined;
+  const dayParam = searchParams.get("day");
+  const curriculumDay = dayParam ? Number(dayParam) : undefined;
+  const missionId = searchParams.get("missionId") ?? undefined;
+  const dueDate = searchParams.get("dueDate") ?? undefined;
 
   return (
     <MotionDiv {...fadeInProps} className="flex flex-col gap-6">
       <header className="flex flex-col gap-2">
-        <div className="flex items-center justify-between gap-2">
-          <div className="flex flex-col gap-1">
-            <p className="text-xs font-semibold text-cocoa">커뮤니티</p>
-            <h1 className="text-2xl font-bold text-cocoa">함께 키우는 이야기</h1>
-          </div>
-          <GoogleSignInButton />
+        <div className="flex flex-col gap-1">
+          <p className="text-xs font-semibold text-cocoa">커뮤니티</p>
+          <h1 className="text-2xl font-bold text-cocoa">함께 키우는 이야기</h1>
         </div>
         <p className="text-sm text-muted-foreground">
           미션 인증 영상에 피드백을 남기거나, 자유롭게 질문하고 작은 성과를 나눠보세요.
@@ -48,9 +47,12 @@ function CommunityPageContent() {
           <TabsContent key={type} value={type}>
             <CommunityBoardList
               type={type}
-              missionCourseTitle={type === "mission" ? missionCourseTitle : undefined}
-              missionWeek={type === "mission" ? missionWeek : undefined}
-              autoOpenCompose={type === "mission" && missionWeek !== undefined}
+              dogId={type === "mission" ? dogId : undefined}
+              dogName={type === "mission" ? dogName : undefined}
+              curriculumDay={type === "mission" ? curriculumDay : undefined}
+              missionId={type === "mission" ? missionId : undefined}
+              dueDate={type === "mission" ? dueDate : undefined}
+              autoOpenCompose={type === "mission" && curriculumDay !== undefined}
             />
           </TabsContent>
         ))}

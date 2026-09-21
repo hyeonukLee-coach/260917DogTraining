@@ -1,4 +1,4 @@
-import { CourseActivation, Mission, MissionRecord, RecommendedCourse } from "@/types/wellness";
+import { Curriculum, MissionRecord } from "@/types/wellness";
 
 /**
  * 날짜/진행률 계산 유틸.
@@ -41,22 +41,18 @@ export function diffDays(fromStr: string, toStr: string): number {
   return Math.round((toUtcMs(toStr) - toUtcMs(fromStr)) / ONE_DAY_MS);
 }
 
-export function startOfWeek(dateStr: string): string {
-  const ms = toUtcMs(dateStr);
-  const dayOfWeek = new Date(ms).getUTCDay(); // 0=일 ... 6=토
-  const diffToMonday = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
-  return fromUtcMs(ms - diffToMonday * ONE_DAY_MS);
+/** 커리큘럼이 시작된 날짜(1일차) 기준으로, 그 일차의 미션을 인증해야 하는 날짜 */
+export function missionDueDate(startDate: string, day: number): string {
+  return addDays(startDate, day - 1);
 }
 
-/** 코스 활성화 시점 기준으로, 주어진 날짜가 코스의 며칠 차인지 (1부터 시작) */
-export function courseDueDay(activation: CourseActivation, dateStr: string): number {
-  return diffDays(activation.startDate, dateStr) + 1;
-}
-
-export interface TodayMissionEntry {
-  course: RecommendedCourse;
-  mission: Mission;
-  record?: MissionRecord;
+/** 오늘이 커리큘럼의 며칠 차에 해당하는지 (범위를 벗어나면 1 또는 totalDays로 자른다) */
+export function currentCurriculumDay(
+  curriculum: Curriculum,
+  today: string = getLocalDateString()
+): number {
+  const day = diffDays(curriculum.startDate, today) + 1;
+  return Math.min(Math.max(day, 1), curriculum.totalDays);
 }
 
 export function findMissionRecord(
@@ -67,138 +63,90 @@ export function findMissionRecord(
   return records.find((r) => r.missionId === missionId && r.date === dateStr);
 }
 
-/** 특정 날짜에 활성화된 코스들에서 진행해야 할 미션 목록 (코스가 끝났거나 아직 시작 전이면 제외) */
-export function getMissionsDueOn(
-  courses: RecommendedCourse[],
-  activations: CourseActivation[],
-  dateStr: string
-): { course: RecommendedCourse; mission: Mission }[] {
-  const entries: { course: RecommendedCourse; mission: Mission }[] = [];
-  for (const activation of activations) {
-    const course = courses.find((c) => c.id === activation.courseId);
-    if (!course) continue;
-    const dueDay = courseDueDay(activation, dateStr);
-    if (dueDay < 1 || dueDay > course.missions.length) continue;
-    const mission = course.missions.find((m) => m.day === dueDay);
-    if (mission) entries.push({ course, mission });
-  }
-  return entries;
-}
-
-export function getTodayMissions(
-  courses: RecommendedCourse[],
-  activations: CourseActivation[],
-  records: MissionRecord[],
-  today: string = getLocalDateString()
-): TodayMissionEntry[] {
-  return getMissionsDueOn(courses, activations, today).map(({ course, mission }) => ({
-    course,
-    mission,
-    record: findMissionRecord(records, mission.id, today),
-  }));
-}
-
-export function isCourseFinished(
-  course: RecommendedCourse,
-  activation: CourseActivation,
-  today: string = getLocalDateString()
+/** 그 일차에 배정된 미션을 모두 완료했는지 (완료 기록은 그 일차의 인증 예정일 기준으로 찾는다) */
+export function getDayCompletion(
+  curriculum: Curriculum,
+  day: number,
+  records: MissionRecord[]
 ): boolean {
-  return courseDueDay(activation, today) > course.missions.length;
+  const curriculumDay = curriculum.days.find((d) => d.day === day);
+  if (!curriculumDay || curriculumDay.items.length === 0) return false;
+  const dueDate = missionDueDate(curriculum.startDate, day);
+  return curriculumDay.items.every(
+    (item) => findMissionRecord(records, item.id, dueDate)?.completed === true
+  );
 }
 
-/** 오늘을 포함해 며칠 연속으로 "그날 예정된 미션을 모두" 완료했는지 */
-export function computeStreak(
-  courses: RecommendedCourse[],
-  activations: CourseActivation[],
+/** 인증 완료 / 미인증(기한이 지났는데 완료 안 함) / 오늘 진행 중 / 아직 오지 않음 */
+export type DayCertStatus = "completed" | "uncertified" | "today" | "upcoming";
+
+export function getDayStatus(
+  curriculum: Curriculum,
+  day: number,
   records: MissionRecord[],
   today: string = getLocalDateString()
-): number {
-  let streak = 0;
-  let cursor = today;
+): DayCertStatus {
+  if (getDayCompletion(curriculum, day, records)) return "completed";
+  const dueDate = missionDueDate(curriculum.startDate, day);
+  const daysPastDue = diffDays(dueDate, today);
+  if (daysPastDue > 0) return "uncertified";
+  if (daysPastDue === 0) return "today";
+  return "upcoming";
+}
 
-  // 무한 루프 방지용 상한 (1년)
-  for (let i = 0; i < 365; i++) {
-    const dueToday = getMissionsDueOn(courses, activations, cursor);
-    if (dueToday.length === 0) break;
-    const allCompleted = dueToday.every(
-      ({ mission }) => findMissionRecord(records, mission.id, cursor)?.completed
-    );
-    if (!allCompleted) break;
-    streak++;
-    cursor = addDays(cursor, -1);
+export interface CurriculumStats {
+  totalDays: number;
+  /** 오늘까지 인증 기한이 도래한 일차 수 (아직 오지 않은 일차는 제외) */
+  dueDaysCount: number;
+  completedCount: number;
+  uncertifiedCount: number;
+  /** 0~100 정수, dueDaysCount 기준 */
+  achievementRate: number;
+  /** 0~100 정수, dueDaysCount 기준 */
+  uncertifiedRate: number;
+  /** 가장 최근 일차부터 거꾸로 센 연속 인증일수 */
+  currentStreak: number;
+}
+
+/** 소유자·관리자만 보는 통계: 미션 달성률, 미인증률, 연속 인증일수 */
+export function computeCurriculumStats(
+  curriculum: Curriculum,
+  records: MissionRecord[],
+  today: string = getLocalDateString()
+): CurriculumStats {
+  let dueDaysCount = 0;
+  let completedCount = 0;
+  let uncertifiedCount = 0;
+
+  for (const curriculumDay of curriculum.days) {
+    const status = getDayStatus(curriculum, curriculumDay.day, records, today);
+    if (status === "upcoming") continue;
+    dueDaysCount++;
+    if (status === "completed") completedCount++;
+    if (status === "uncertified") uncertifiedCount++;
   }
 
-  return streak;
-}
+  const achievementRate = dueDaysCount === 0 ? 0 : Math.round((completedCount / dueDaysCount) * 100);
+  const uncertifiedRate = dueDaysCount === 0 ? 0 : Math.round((uncertifiedCount / dueDaysCount) * 100);
 
-export interface WeeklyCompletion {
-  completed: number;
-  scheduled: number;
-  /** 0~100 정수 퍼센트 */
-  rate: number;
-}
-
-/** 이번 주(월~오늘)에 예정된 미션 대비 완료율 */
-export function computeWeeklyCompletion(
-  courses: RecommendedCourse[],
-  activations: CourseActivation[],
-  records: MissionRecord[],
-  today: string = getLocalDateString()
-): WeeklyCompletion {
-  const weekStart = startOfWeek(today);
-  let scheduled = 0;
-  let completed = 0;
-
-  let cursor = weekStart;
-  while (diffDays(cursor, today) >= 0) {
-    const due = getMissionsDueOn(courses, activations, cursor);
-    scheduled += due.length;
-    completed += due.filter(
-      ({ mission }) => findMissionRecord(records, mission.id, cursor)?.completed
-    ).length;
-    cursor = addDays(cursor, 1);
-  }
-
-  const rate = scheduled === 0 ? 0 : Math.round((completed / scheduled) * 100);
-  return { completed, scheduled, rate };
-}
-
-export type DayStatus = "completed" | "partial" | "missed" | "upcoming" | "none";
-
-export interface WeekDayInfo {
-  date: string;
-  status: DayStatus;
-}
-
-/** 이번 주(월~일) 하루하루의 진행 상태. 그래프/스트릭 시각화에 사용한다 */
-export function getWeekDayStatuses(
-  courses: RecommendedCourse[],
-  activations: CourseActivation[],
-  records: MissionRecord[],
-  today: string = getLocalDateString()
-): WeekDayInfo[] {
-  const weekStart = startOfWeek(today);
-  const days: WeekDayInfo[] = [];
-
-  for (let i = 0; i < 7; i++) {
-    const date = addDays(weekStart, i);
-    const due = getMissionsDueOn(courses, activations, date);
-    const isFuture = diffDays(today, date) > 0;
-
-    let status: DayStatus;
-    if (due.length === 0) {
-      status = isFuture ? "upcoming" : "none";
-    } else {
-      const completedCount = due.filter(
-        ({ mission }) => findMissionRecord(records, mission.id, date)?.completed
-      ).length;
-      if (completedCount === due.length) status = "completed";
-      else if (completedCount > 0) status = "partial";
-      else status = isFuture ? "upcoming" : "missed";
+  let currentStreak = 0;
+  for (let day = curriculum.totalDays; day >= 1; day--) {
+    const status = getDayStatus(curriculum, day, records, today);
+    if (status === "upcoming" || status === "today") continue;
+    if (status === "completed") {
+      currentStreak++;
+      continue;
     }
-
-    days.push({ date, status });
+    break; // uncertified를 만나면 연속 기록이 끊긴다
   }
 
-  return days;
+  return {
+    totalDays: curriculum.totalDays,
+    dueDaysCount,
+    completedCount,
+    uncertifiedCount,
+    achievementRate,
+    uncertifiedRate,
+    currentStreak,
+  };
 }

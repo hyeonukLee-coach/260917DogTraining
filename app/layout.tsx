@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import "./globals.css";
 
 import { AuthProvider } from "@/components/AuthProvider";
+import { TopNav } from "@/components/TopNav";
 
 export const metadata: Metadata = {
   title: "UNIPAWS AI WELLNESS",
@@ -22,6 +23,7 @@ export default function RootLayout({
     <html lang="ko">
       <body className="min-h-screen bg-paper font-sans antialiased">
         <AuthProvider />
+        <TopNav />
         <div className="mx-auto min-h-screen w-full max-w-2xl px-4 py-6 sm:px-6 sm:py-10">
           {children}
         </div>

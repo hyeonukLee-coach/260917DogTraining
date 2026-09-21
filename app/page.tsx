@@ -30,7 +30,7 @@ export default function HomePage() {
       </div>
 
       <div className="flex w-full flex-col gap-2">
-        <Link href="/profile" className="w-full">
+        <Link href="/dogs" className="w-full">
           <Button type="button" size="lg" className="w-full">
             우리 강아지 웰니스 시작하기
           </Button>

@@ -8,6 +8,8 @@ import { z } from "zod";
 import { AlertCircle, Camera, Check, Eye, EyeOff, Sparkles, X } from "lucide-react";
 
 import { AIAnalysisError } from "@/lib/recommendation/aiEngine";
+import { saveDogPhoto } from "@/lib/dataStore";
+import { useAuthStore } from "@/store/useAuthStore";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -100,7 +102,8 @@ function readFileAsDataUrl(file: File): Promise<string> {
 
 export function ProfileForm() {
   const router = useRouter();
-  const submitDog = useWellnessStore((state) => state.submitDog);
+  const user = useAuthStore((state) => state.user);
+  const addDog = useWellnessStore((state) => state.addDog);
   const setApiKey = useWellnessStore((state) => state.setApiKey);
   const storedApiKey = useWellnessStore((state) => state.apiKey);
   const isHydrated = useWellnessStore((state) => state.isHydrated);
@@ -162,6 +165,10 @@ export function ProfileForm() {
 
   const onSubmit = async (values: FormValues) => {
     setSubmitError(null);
+    if (!user) {
+      setSubmitError("로그인 후 다시 시도해주세요.");
+      return;
+    }
 
     const input: DogInput = {
       name: values.name.trim(),
@@ -177,7 +184,6 @@ export function ProfileForm() {
       behaviorConcerns: values.behaviorConcerns?.trim() || undefined,
       physicalConcerns: values.physicalConcerns?.trim() || undefined,
       goals: values.goals as WellnessGoal[],
-      photoDataUrl: values.photoDataUrl?.trim() || undefined,
     };
 
     if (values.generationMode === "ai" && values.apiKey?.trim()) {
@@ -185,11 +191,14 @@ export function ProfileForm() {
     }
 
     try {
-      await submitDog(input, {
+      const dog = await addDog(user.uid, input, {
         mode: values.generationMode,
         apiKey: values.apiKey?.trim(),
       });
-      router.push("/analysis");
+      if (values.photoDataUrl?.trim()) {
+        saveDogPhoto(dog.id, values.photoDataUrl.trim());
+      }
+      router.push(`/dogs/${dog.id}`);
     } catch (err) {
       setSubmitError(
         err instanceof AIAnalysisError

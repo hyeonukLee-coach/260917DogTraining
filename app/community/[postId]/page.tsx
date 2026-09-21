@@ -83,10 +83,9 @@ export default function PostDetailPage() {
             <span className="rounded-full bg-sand px-2.5 py-0.5 text-xs font-semibold text-cocoa">
               {POST_TYPE_LABELS[post.type]}
             </span>
-            {post.missionWeek && (
+            {post.dogName && post.curriculumDay && (
               <span className="rounded-full bg-cocoa/15 px-2.5 py-0.5 text-xs font-semibold text-cocoa">
-                {post.missionCourseTitle ? `${post.missionCourseTitle} · ` : ""}
-                {post.missionWeek}주차
+                {post.dogName} · {post.curriculumDay}일차
               </span>
             )}
             {post.resolved && (
@@ -117,12 +116,25 @@ export default function PostDetailPage() {
               className="flex items-center gap-2 rounded-xl border border-cocoa/30 bg-sand px-4 py-3 text-sm font-medium text-cocoa"
             >
               <Video className="h-4 w-4 shrink-0" />
-              <span className="flex-1 truncate">인증 영상 보러가기</span>
+              <span className="flex-1 truncate">인증링크 보러가기</span>
               <ExternalLink className="h-4 w-4 shrink-0" />
             </a>
           )}
 
-          <p className="whitespace-pre-wrap text-sm text-foreground">{post.content}</p>
+          {post.type === "mission" ? (
+            <div className="flex flex-col gap-3 text-sm">
+              <div>
+                <p className="font-semibold text-cocoa">오늘 진행한 교육&amp;운동 세부내용</p>
+                <p className="mt-0.5 whitespace-pre-wrap text-foreground">{post.activityDetail}</p>
+              </div>
+              <div>
+                <p className="font-semibold text-cocoa">반려견과 함께 하며 느낀점</p>
+                <p className="mt-0.5 whitespace-pre-wrap text-foreground">{post.reflection}</p>
+              </div>
+            </div>
+          ) : (
+            <p className="whitespace-pre-wrap text-sm text-foreground">{post.content}</p>
+          )}
 
           <div className="flex flex-wrap items-center gap-2">
             <LikeButton postId={post.id} initialLikeCount={likeCount} />

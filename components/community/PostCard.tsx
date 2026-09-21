@@ -8,15 +8,17 @@ import { PostWithCounts } from "@/lib/firebase/posts";
 import { cn } from "@/lib/utils";
 
 export function PostCard({ post }: { post: PostWithCounts }) {
+  const excerpt = post.type === "mission" ? post.reflection : post.content;
+
   return (
     <Link href={`/community/${post.id}`}>
       <MotionDiv {...hoverScaleProps}>
         <Card className={cn(post.resolved && "border-cocoa/50")}>
           <CardHeader className="pb-2">
             <div className="flex flex-wrap items-center gap-1.5">
-              {post.type === "mission" && post.missionWeek && (
+              {post.type === "mission" && post.dogName && post.curriculumDay && (
                 <span className="rounded-full bg-cocoa/15 px-2.5 py-0.5 text-xs font-semibold text-cocoa">
-                  {post.missionWeek}주차
+                  {post.dogName} · {post.curriculumDay}일차
                 </span>
               )}
               {post.resolved && (
@@ -35,7 +37,7 @@ export function PostCard({ post }: { post: PostWithCounts }) {
             <h3 className="mt-1 text-base font-bold text-cocoa">{post.title}</h3>
           </CardHeader>
           <CardContent className="flex flex-col gap-2">
-            <p className="line-clamp-2 text-sm text-muted-foreground">{post.content}</p>
+            <p className="line-clamp-2 text-sm text-muted-foreground">{excerpt}</p>
             <div className="flex items-center justify-between text-xs text-muted-foreground">
               <span className="flex items-center gap-1">
                 {post.authorName}

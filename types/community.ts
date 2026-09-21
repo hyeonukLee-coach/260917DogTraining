@@ -1,9 +1,7 @@
-import { MissionCategory, PurposeTag } from "@/types/wellness";
+import { MissionCategory, ProgramLength, PurposeTag } from "@/types/wellness";
 
 /**
  * Firebase(Firestore + Auth)를 이용한 커뮤니티/영상 추천 데이터 모델.
- * 이 앱의 나머지 부분(반려견 프로필·웰니스 플랜)은 여전히 로그인 없이
- * 브라우저 로컬에만 저장되고, 커뮤니티 기능만 Firebase를 사용한다.
  */
 
 /** 게시판 종류: 미션 인증 / 자유 / 질문 / 작은 성과 */
@@ -27,11 +25,18 @@ export interface Post {
   /** 작성 시점의 훈련사 배지 스냅샷 */
   authorIsTrainer: boolean;
   title: string;
-  content: string;
-  /** 미션 인증 게시글만 사용: 본인이 올린 영상(유튜브/드라이브 등) 링크 */
+  /** 자유·질문·작은 성과 게시글의 본문. 미션 인증 게시글에는 쓰지 않는다 */
+  content?: string;
+  /** 미션 인증 게시글만: 본인이 올린 인증 영상(유튜브/드라이브 등) 링크 */
   videoUrl?: string;
-  missionCourseTitle?: string;
-  missionWeek?: number;
+  /** 미션 인증 게시글만: 오늘 진행한 교육&운동 세부내용 */
+  activityDetail?: string;
+  /** 미션 인증 게시글만: 반려견과 함께하며 느낀점 */
+  reflection?: string;
+  /** 미션 인증 게시글만: 어떤 강아지의 커리큘럼 몇 일차 미션인지 */
+  dogId?: string;
+  dogName?: string;
+  curriculumDay?: number;
   /** 피드백이 해결되어 작성자가 완료 처리했는지 */
   resolved: boolean;
   createdAt: number;
@@ -44,6 +49,8 @@ export interface Comment {
   authorName: string;
   authorIsTrainer: boolean;
   text: string;
+  /** 최상위 댓글이면 null, 대댓글이면 부모 댓글 id */
+  parentCommentId: string | null;
   createdAt: number;
 }
 
@@ -66,8 +73,8 @@ export interface VideoProgramWeek {
 
 /** 로컬(localStorage)에 저장되는 반려견별 영상 프로그램 진행 상태 */
 export interface VideoProgramState {
-  courseId: string;
-  weeks: 4 | 8;
+  dogId: string;
+  weeks: ProgramLength;
   /** 주차별로 배정된 영상 id (매번 다시 매칭하지 않도록 최초 생성 시점에 고정) */
   items: { week: number; videoId: string }[];
   /** 시청 완료로 표시한 주차 번호 목록 */

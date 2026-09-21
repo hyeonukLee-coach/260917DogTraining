@@ -46,6 +46,26 @@ service cloud.firestore {
       allow read, write: if isAdmin();
     }
 
+    // 반려견 프로필: 소유자(ownerUid) 본인과 관리자만 읽을 수 있고, 본인만 쓸 수 있다.
+    match /dogs/{dogId} {
+      allow read: if isOwner(resource.data.ownerUid) || isAdmin();
+      allow create: if isSignedIn() && request.resource.data.ownerUid == request.auth.uid;
+      allow update: if isOwner(resource.data.ownerUid) && unchanged('ownerUid');
+      allow delete: if false;
+
+      // 커리큘럼·미션 기록에도 ownerUid를 함께 저장해(dogs.ts 참고) 상위 문서를
+      // 다시 조회하지 않고 바로 소유자를 확인한다. 통계는 소유자와 관리자만 본다.
+      match /curriculum/{docId} {
+        allow read: if isOwner(resource.data.ownerUid) || isAdmin();
+        allow write: if isSignedIn() && request.resource.data.ownerUid == request.auth.uid;
+      }
+
+      match /missionRecords/{recordId} {
+        allow read: if isOwner(resource.data.ownerUid) || isAdmin();
+        allow write: if isSignedIn() && request.resource.data.ownerUid == request.auth.uid;
+      }
+    }
+
     match /posts/{postId} {
       allow read: if true;
 
@@ -55,9 +75,23 @@ service cloud.firestore {
         && request.resource.data.title is string
         && request.resource.data.title.size() > 0
         && request.resource.data.title.size() <= 100
-        && request.resource.data.content is string
-        && request.resource.data.content.size() <= 4000
-        && request.resource.data.resolved == false;
+        && request.resource.data.resolved == false
+        && (
+          (request.resource.data.type == 'mission'
+            && request.resource.data.videoUrl is string
+            && request.resource.data.videoUrl.size() > 0
+            && request.resource.data.activityDetail is string
+            && request.resource.data.activityDetail.size() > 0
+            && request.resource.data.activityDetail.size() <= 2000
+            && request.resource.data.reflection is string
+            && request.resource.data.reflection.size() > 0
+            && request.resource.data.reflection.size() <= 2000)
+          ||
+          (request.resource.data.type != 'mission'
+            && request.resource.data.content is string
+            && request.resource.data.content.size() > 0
+            && request.resource.data.content.size() <= 4000)
+        );
 
       // 작성자만, 그리고 소유권·작성자·종류·작성시각은 바꿀 수 없게 수정을 허용한다.
       allow update: if isSignedIn()
@@ -81,7 +115,9 @@ service cloud.firestore {
           && request.resource.data.authorUid == request.auth.uid
           && request.resource.data.text is string
           && request.resource.data.text.size() > 0
-          && request.resource.data.text.size() <= 1000;
+          && request.resource.data.text.size() <= 1000
+          && (request.resource.data.parentCommentId == null
+            || request.resource.data.parentCommentId is string);
         allow update: if false;
         allow delete: if isSignedIn() && resource.data.authorUid == request.auth.uid;
       }

@@ -11,15 +11,21 @@ import { PostType } from "@/types/community";
 
 interface CommunityBoardListProps {
   type: PostType;
-  missionCourseTitle?: string;
-  missionWeek?: number;
+  dogId?: string;
+  dogName?: string;
+  curriculumDay?: number;
+  missionId?: string;
+  dueDate?: string;
   autoOpenCompose?: boolean;
 }
 
 export function CommunityBoardList({
   type,
-  missionCourseTitle,
-  missionWeek,
+  dogId,
+  dogName,
+  curriculumDay,
+  missionId,
+  dueDate,
   autoOpenCompose,
 }: CommunityBoardListProps) {
   const [posts, setPosts] = useState<PostWithCounts[]>([]);
@@ -68,10 +74,13 @@ export function CommunityBoardList({
       <PostComposer
         type={type}
         defaultTitle={
-          missionWeek !== undefined ? `${missionCourseTitle ?? "교육"} ${missionWeek}주차 미션 인증` : undefined
+          curriculumDay !== undefined ? `${dogName ?? "우리 강아지"} ${curriculumDay}일차 미션 인증` : undefined
         }
-        missionCourseTitle={missionCourseTitle}
-        missionWeek={missionWeek}
+        dogId={dogId}
+        dogName={dogName}
+        curriculumDay={curriculumDay}
+        missionId={missionId}
+        dueDate={dueDate}
         autoOpen={autoOpenCompose}
         onCreated={loadFirstPage}
       />

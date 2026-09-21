@@ -6,6 +6,7 @@ import { AssessmentInput } from "@/types/wellness";
 function buildInput(overrides: Partial<AssessmentInput>): AssessmentInput {
   return {
     id: "dog-test-1",
+    ownerUid: "owner-test-1",
     name: "테스트견",
     breed: "믹스견",
     ageYears: 3,
@@ -23,34 +24,39 @@ describe("analyzeDog", () => {
       })
     );
 
-    expect(plan.assessment.priorityAreas[0]).toBe("관절관리");
+    expect(plan.priorityAreas[0]).toBe("관절관리");
   });
 
-  it("신체 걱정 부분이 있으면 운동 코스에 고급 난이도 미션을 배치하지 않고, 수의사 상담 안내를 켠다", () => {
+  it("신체 걱정 부분이 있으면 운동 항목에 고급 난이도를 배치하지 않고, 건강 특이사항이 많으면(3개 이상 목표) 8주 과정이 되며, 수의사 상담 안내를 켠다", () => {
     const plan = analyzeDog(
       buildInput({
-        goals: ["근력강화"],
+        goals: ["근력강화", "관절관리", "체중관리"],
         physicalConcerns: "무릎이 약해요",
       })
     );
 
-    const exerciseCourse = plan.courses.find((c) => c.category === "운동");
-    expect(exerciseCourse).toBeDefined();
-    expect(exerciseCourse!.missions.every((m) => m.difficulty !== "고급")).toBe(true);
-    expect(plan.assessment.needsVetNotice).toBe(true);
+    const exerciseItems = plan.days.flatMap((d) => d.items).filter((i) => i.category === "운동");
+    expect(exerciseItems.length).toBeGreaterThan(0);
+    expect(exerciseItems.every((i) => i.difficulty !== "고급")).toBe(true);
+    expect(plan.needsVetNotice).toBe(true);
+    expect(plan.weeks).toBe(8);
+    expect(plan.totalDays).toBe(56);
   });
 
-  it("교육/운동/생활관리 3개 코스를 각각 7일치(1~7일) 미션으로 만들고, 걱정 부분이 없으면 수의사 안내를 끈다", () => {
+  it("교육·운동·생활관리를 요일별로 순환 배합해 하나의 커리큘럼으로 만들고, 걱정 부분이 없고 목표가 적으면 4주 과정에 수의사 안내를 끈다", () => {
     const plan = analyzeDog(buildInput({ goals: ["관계형성", "생활습관개선"] }));
 
-    expect(plan.courses).toHaveLength(3);
-    expect(plan.courses.map((c) => c.category).sort()).toEqual(["교육", "생활관리", "운동"].sort());
+    expect(plan.weeks).toBe(4);
+    expect(plan.totalDays).toBe(28);
+    expect(plan.days).toHaveLength(28);
+    expect(plan.days.map((d) => d.day)).toEqual(Array.from({ length: 28 }, (_, i) => i + 1));
 
-    for (const course of plan.courses) {
-      expect(course.missions).toHaveLength(7);
-      expect(course.missions.map((m) => m.day)).toEqual([1, 2, 3, 4, 5, 6, 7]);
-    }
+    // 1일차=교육, 2일차=운동, 3일차=생활관리 순으로 순환 배합된다
+    expect(plan.days[0].items[0].category).toBe("교육");
+    expect(plan.days[1].items[0].category).toBe("운동");
+    expect(plan.days[2].items[0].category).toBe("생활관리");
+    expect(plan.days[3].items[0].category).toBe("교육");
 
-    expect(plan.assessment.needsVetNotice).toBe(false);
+    expect(plan.needsVetNotice).toBe(false);
   });
 });

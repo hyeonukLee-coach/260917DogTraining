@@ -40,10 +40,13 @@ function mapPost(snap: QueryDocumentSnapshot<DocumentData>): Post {
     authorPhotoURL: data.authorPhotoURL ?? undefined,
     authorIsTrainer: data.authorIsTrainer === true,
     title: data.title,
-    content: data.content,
+    content: data.content ?? undefined,
     videoUrl: data.videoUrl ?? undefined,
-    missionCourseTitle: data.missionCourseTitle ?? undefined,
-    missionWeek: data.missionWeek ?? undefined,
+    activityDetail: data.activityDetail ?? undefined,
+    reflection: data.reflection ?? undefined,
+    dogId: data.dogId ?? undefined,
+    dogName: data.dogName ?? undefined,
+    curriculumDay: data.curriculumDay ?? undefined,
     resolved: data.resolved === true,
     createdAt: toMillis(data.createdAt),
   };
@@ -58,6 +61,7 @@ function mapComment(postId: string, snap: QueryDocumentSnapshot<DocumentData>): 
     authorName: data.authorName,
     authorIsTrainer: data.authorIsTrainer === true,
     text: data.text,
+    parentCommentId: data.parentCommentId ?? null,
     createdAt: toMillis(data.createdAt),
   };
 }
@@ -82,10 +86,17 @@ export interface CreatePostInput {
   authorPhotoURL?: string;
   authorIsTrainer: boolean;
   title: string;
-  content: string;
+  /** 자유·질문·작은 성과 게시글의 본문 (미션 인증에는 쓰지 않음) */
+  content?: string;
+  /** 미션 인증: 본인이 올린 인증 영상 링크 */
   videoUrl?: string;
-  missionCourseTitle?: string;
-  missionWeek?: number;
+  /** 미션 인증: 오늘 진행한 교육&운동 세부내용 */
+  activityDetail?: string;
+  /** 미션 인증: 반려견과 함께하며 느낀점 */
+  reflection?: string;
+  dogId?: string;
+  dogName?: string;
+  curriculumDay?: number;
 }
 
 export async function createPost(input: CreatePostInput): Promise<string> {
@@ -97,14 +108,43 @@ export async function createPost(input: CreatePostInput): Promise<string> {
     authorPhotoURL: input.authorPhotoURL ?? null,
     authorIsTrainer: input.authorIsTrainer,
     title: input.title,
-    content: input.content,
+    content: input.content ?? null,
     videoUrl: input.videoUrl ?? null,
-    missionCourseTitle: input.missionCourseTitle ?? null,
-    missionWeek: input.missionWeek ?? null,
+    activityDetail: input.activityDetail ?? null,
+    reflection: input.reflection ?? null,
+    dogId: input.dogId ?? null,
+    dogName: input.dogName ?? null,
+    curriculumDay: input.curriculumDay ?? null,
     resolved: false,
     createdAt: serverTimestamp(),
   });
   return ref.id;
+}
+
+/** 마이페이지: 내가 쓴 글만 모아본다 */
+export async function listPostsByAuthor(authorUid: string): Promise<Post[]> {
+  const db = getFirestoreDb();
+  const q = query(
+    collection(db, "posts"),
+    where("authorUid", "==", authorUid),
+    orderBy("createdAt", "desc")
+  );
+  const snap = await getDocs(q);
+  return snap.docs.map(mapPost);
+}
+
+/** 마이페이지 카드에 좋아요/댓글 수까지 함께 보여주기 위한 버전 */
+export async function listPostsByAuthorWithCounts(authorUid: string): Promise<PostWithCounts[]> {
+  const posts = await listPostsByAuthor(authorUid);
+  return Promise.all(
+    posts.map(async (post) => {
+      const [likeCount, commentCount] = await Promise.all([
+        getLikeCount(post.id),
+        getCommentCount(post.id),
+      ]);
+      return { ...post, likeCount, commentCount };
+    })
+  );
 }
 
 export interface PostPage {
@@ -225,6 +265,8 @@ export interface AddCommentInput {
   authorName: string;
   authorIsTrainer: boolean;
   text: string;
+  /** 대댓글이면 부모 댓글 id, 최상위 댓글이면 생략 */
+  parentCommentId?: string;
 }
 
 export async function addComment(postId: string, input: AddCommentInput): Promise<string> {
@@ -234,6 +276,7 @@ export async function addComment(postId: string, input: AddCommentInput): Promis
     authorName: input.authorName,
     authorIsTrainer: input.authorIsTrainer,
     text: input.text,
+    parentCommentId: input.parentCommentId ?? null,
     createdAt: serverTimestamp(),
   });
   return ref.id;

@@ -8,22 +8,28 @@ import {
 } from "@/data/missionLibrary";
 import {
   AssessmentInput,
+  CurriculumDay,
   Difficulty,
   Mission,
   MissionCategory,
+  ProgramLength,
   PurposeTag,
-  RecommendedCourse,
-  WellnessAssessment,
   WellnessGoal,
   WellnessPlan,
 } from "@/types/wellness";
-
-const COURSE_LENGTH_DAYS = 7;
 
 const DIFFICULTY_RANK: Record<Difficulty, number> = {
   초급: 0,
   중급: 1,
   고급: 2,
+};
+
+const CATEGORY_ORDER: MissionCategory[] = ["교육", "운동", "생활관리"];
+
+const TEMPLATES_BY_CATEGORY: Record<MissionCategory, MissionTemplate[]> = {
+  교육: educationTemplates,
+  운동: exerciseTemplates,
+  생활관리: lifestyleTemplates,
 };
 
 function resolveAgeYears(input: AssessmentInput): number | undefined {
@@ -156,119 +162,13 @@ function buildSortedPool(
   return [...pool].sort((a, b) => scoreTemplate(b, targetTags) - scoreTemplate(a, targetTags));
 }
 
-interface CourseCopy {
-  title: string;
-  description: string;
-}
-
-const COURSE_COPY: Record<MissionCategory, Partial<Record<WellnessGoal, CourseCopy>>> = {
-  교육: {
-    관계형성: {
-      title: "보호자 집중 관계형성 7일 코스",
-      description: "교감을 쌓아가는 7일 훈련으로 보호자와의 신뢰를 단단히 다져요.",
-    },
-    행동교육: {
-      title: "차분한 행동 교정 7일 코스",
-      description: "일상 속 행동 고민을 하나씩 풀어가는 7일 교육 코스예요.",
-    },
-    정서적안정: {
-      title: "마음이 편안해지는 7일 코스",
-      description: "불안을 줄이고 안정감을 키우는 7일 교육 루틴이에요.",
-    },
-    시니어관리: {
-      title: "시니어犬 맞춤 교감 7일 코스",
-      description: "나이에 맞춘 부드러운 자극으로 인지 활력을 지켜줘요.",
-    },
-  },
-  운동: {
-    근력강화: {
-      title: "기초 코어 밸런스 7일 코스",
-      description: "코어와 관절을 지지하는 근력을 키우는 7일 운동 코스예요.",
-    },
-    활동량증가: {
-      title: "하루 활동량 개선 챌린지",
-      description: "에너지를 건강하게 발산하는 7일 활동 챌린지예요.",
-    },
-    체중관리: {
-      title: "건강 체중 관리 7일 코스",
-      description: "무리 없이 체중을 관리하는 7일 운동 루틴이에요.",
-    },
-    관절관리: {
-      title: "관절이 편안해지는 7일 코스",
-      description: "관절에 가는 부담을 줄이면서 몸을 움직이는 7일 코스예요.",
-    },
-  },
-  생활관리: {
-    생활습관개선: {
-      title: "건강한 하루 루틴 7일 코스",
-      description: "작은 습관부터 차근차근 바꿔가는 7일 생활관리 코스예요.",
-    },
-    정서적안정: {
-      title: "편안한 일상 만들기 7일 코스",
-      description: "일상 환경을 정돈해 정서적 안정을 돕는 7일 코스예요.",
-    },
-    체중관리: {
-      title: "체중 관리 생활습관 7일 코스",
-      description: "급여와 활동 습관을 함께 관리하는 7일 코스예요.",
-    },
-    시니어관리: {
-      title: "시니어犬 생활 케어 7일 코스",
-      description: "나이 든 반려견의 몸에 맞춘 생활 관리 7일 코스예요.",
-    },
-  },
-};
-
-function buildCourseCopy(category: MissionCategory, topGoal: WellnessGoal): CourseCopy {
-  const preset = COURSE_COPY[category][topGoal];
-  if (preset) return preset;
-  return {
-    title: `${topGoal} 집중 ${category} 7일 코스`,
-    description: `${withEulReul(topGoal)} 목표로 짜인 7일 맞춤 ${category} 코스예요.`,
-  };
-}
-
-function pickTopGoal(templates: MissionTemplate[], rankedGoals: WellnessGoal[]): WellnessGoal {
-  const tagsInCategory = new Set<PurposeTag>();
-  for (const t of templates) {
-    for (const tag of t.purposeTags) tagsInCategory.add(tag);
-  }
-  for (const goal of rankedGoals) {
-    if (tagsInCategory.has(goal)) return goal;
-  }
-  return rankedGoals[0];
-}
-
-function buildCourse(
-  category: MissionCategory,
-  templates: MissionTemplate[],
-  targetTags: Set<PurposeTag>,
-  maxDifficulty: Difficulty,
-  rankedGoals: WellnessGoal[]
-): RecommendedCourse {
-  const pool = buildSortedPool(templates, targetTags, maxDifficulty);
-  const sequence = buildCyclicSequence(pool, COURSE_LENGTH_DAYS);
-
-  const missions: Mission[] = sequence.map((template, index) => ({
-    ...template,
-    day: index + 1,
-    id: `${template.id}-${generateId()}`,
-  }));
-
-  const topGoal = pickTopGoal(templates, rankedGoals);
-  const { title, description } = buildCourseCopy(category, topGoal);
-
-  const matchedGoals = rankedGoals
-    .filter((goal) => templates.some((t) => t.purposeTags.includes(goal)))
-    .slice(0, 3);
-
-  return {
-    id: generateId(),
-    category,
-    title,
-    description,
-    matchedGoals: matchedGoals.length > 0 ? matchedGoals : [topGoal],
-    missions,
-  };
+/**
+ * 건강 특이사항이 있거나(더 꼼꼼히 다뤄야 함) 챙길 목표가 많으면(3개 이상)
+ * 더 촘촘한 8주 과정을, 그렇지 않으면 4주 과정을 기본으로 한다.
+ */
+export function decideProgramWeeks(needsVetNotice: boolean, priorityGoalCount: number): ProgramLength {
+  if (needsVetNotice || priorityGoalCount >= 3) return 8;
+  return 4;
 }
 
 function buildCurrentStateSummary(input: AssessmentInput, ageYears: number | undefined): string {
@@ -301,18 +201,23 @@ function withEulReul(word: string): string {
   return `${word}${hasBatchim ? "을" : "를"}`;
 }
 
-function buildCategorySummary(
-  category: MissionCategory,
-  topGoal: WellnessGoal,
-  dogName: string
+function buildUnifiedSummary(
+  dogName: string,
+  rankedGoals: WellnessGoal[],
+  weeks: ProgramLength
 ): string {
-  return `${dogName}에게는 ${withEulReul(topGoal)} 위한 ${category} 코스가 특히 도움이 될 거예요.`;
+  const [topGoal, secondGoal] = rankedGoals;
+  const goalPhrase = secondGoal
+    ? `${withEulReul(topGoal)} 가장 먼저 챙기고 ${secondGoal}도 함께`
+    : `${withEulReul(topGoal)} 중심으로`;
+  return `${dogName}는 ${goalPhrase} 관리할 수 있도록, 교육·운동·생활관리를 하루하루 적절히 배합해 ${weeks}주 커리큘럼으로 짰어요. 매일 한 가지씩 꾸준히 실천해보세요.`;
 }
 
 /**
- * 반려견 프로필을 입력받아 웰니스 분석 결과와 3개(교육/운동/생활관리) 추천 코스를 만든다.
- * 이 함수의 입력/출력 타입은 고정되어 있으며, 추후 규칙 기반 로직 대신
- * 실제 AI API 호출(lib/recommendation/aiEngine.ts)로 손쉽게 교체할 수 있다.
+ * 반려견 프로필을 입력받아, 이슈와 목표를 반영해 교육·운동·생활관리를 하루하루
+ * 배합한 하나의 통합 커리큘럼(WellnessPlan)을 만든다. 이 함수의 입력/출력 타입은
+ * 고정되어 있으며, 추후 규칙 기반 로직 대신 실제 AI API 호출
+ * (lib/recommendation/aiEngine.ts)로 손쉽게 교체할 수 있다.
  */
 export function analyzeDog(input: AssessmentInput): WellnessPlan {
   const ageYears = resolveAgeYears(input);
@@ -324,41 +229,42 @@ export function analyzeDog(input: AssessmentInput): WellnessPlan {
   const targetTags = resolveTargetTags(input, ageYears);
   const maxDifficulty = resolveMaxDifficulty(input, ageYears);
 
-  const educationCourse = buildCourse("교육", educationTemplates, targetTags, maxDifficulty, rankedGoals);
-  const exerciseCourse = buildCourse("운동", exerciseTemplates, targetTags, maxDifficulty, rankedGoals);
-  const lifestyleCourse = buildCourse("생활관리", lifestyleTemplates, targetTags, maxDifficulty, rankedGoals);
-
   const needsVetNotice =
     (input.physicalConcerns?.trim().length ?? 0) > 0 || (input.healthConditions?.trim().length ?? 0) > 0;
+  const weeks = decideProgramWeeks(needsVetNotice, rankedGoals.length);
+  const totalDays = weeks * 7;
 
-  const assessment: WellnessAssessment = {
-    id: generateId(),
-    dogId: input.id,
+  const perCategoryLength = Math.ceil(totalDays / CATEGORY_ORDER.length);
+  const sequences = Object.fromEntries(
+    CATEGORY_ORDER.map((category) => {
+      const pool = buildSortedPool(TEMPLATES_BY_CATEGORY[category], targetTags, maxDifficulty);
+      return [category, buildCyclicSequence(pool, perCategoryLength)];
+    })
+  ) as Record<MissionCategory, MissionTemplate[]>;
+
+  const categoryCursor: Record<MissionCategory, number> = { 교육: 0, 운동: 0, 생활관리: 0 };
+
+  const days: CurriculumDay[] = [];
+  for (let day = 1; day <= totalDays; day++) {
+    const category = CATEGORY_ORDER[(day - 1) % CATEGORY_ORDER.length];
+    const template = sequences[category][categoryCursor[category]++];
+    const item: Mission = {
+      ...template,
+      day,
+      id: `${template.id}-${generateId()}`,
+    };
+    days.push({ day, items: [item] });
+  }
+
+  return {
+    weeks,
+    totalDays,
     currentStateSummary: buildCurrentStateSummary(input, ageYears),
     goals: input.goals,
     priorityAreas: rankedGoals,
-    recommendedEducationSummary: buildCategorySummary(
-      "교육",
-      pickTopGoal(educationTemplates, rankedGoals),
-      input.name
-    ),
-    recommendedExerciseSummary: buildCategorySummary(
-      "운동",
-      pickTopGoal(exerciseTemplates, rankedGoals),
-      input.name
-    ),
-    recommendedLifestyleSummary: buildCategorySummary(
-      "생활관리",
-      pickTopGoal(lifestyleTemplates, rankedGoals),
-      input.name
-    ),
+    summary: buildUnifiedSummary(input.name, rankedGoals, weeks),
     needsVetNotice,
     source: "rule",
-    createdAt: new Date().toISOString(),
-  };
-
-  return {
-    assessment,
-    courses: [educationCourse, exerciseCourse, lifestyleCourse],
+    days,
   };
 }
