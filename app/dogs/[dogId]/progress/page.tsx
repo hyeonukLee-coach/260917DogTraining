@@ -23,7 +23,7 @@ const STATUS_LABELS: Record<DayCertStatus, string> = {
 const STATUS_STYLES: Record<DayCertStatus, string> = {
   completed: "text-cocoa",
   uncertified: "text-destructive",
-  today: "text-amber-400",
+  today: "text-amber-700",
   upcoming: "text-muted-foreground",
 };
 

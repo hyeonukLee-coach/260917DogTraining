@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 import { HeartHandshake, PawPrint, Users } from "lucide-react";
 
@@ -12,9 +13,12 @@ const STATS = [
 export default function HomePage() {
   return (
     <main className="flex flex-col items-center gap-8 py-6 text-center">
-      <span className="rounded-full bg-sand px-3 py-1 text-xs font-semibold tracking-wide text-cocoa">
-        UNIPAWS AI WELLNESS
-      </span>
+      <div className="flex flex-col items-center gap-3">
+        <Image src="/logo-mark.webp" alt="" width={64} height={64} priority className="h-16 w-16" />
+        <span className="rounded-full bg-sand px-3 py-1 text-xs font-semibold tracking-wide text-cocoa">
+          UNIPAWS AI WELLNESS
+        </span>
+      </div>
 
       <div className="flex flex-col gap-3">
         <h1 className="text-3xl font-bold leading-snug text-cocoa">

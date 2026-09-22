@@ -139,7 +139,7 @@ export default function DogDetailPage() {
       </header>
 
       {currentCurriculum.needsVetNotice && (
-        <div className="flex items-start gap-2.5 rounded-xl border border-amber-700/40 bg-amber-400/10 px-4 py-3 text-sm text-amber-200">
+        <div className="flex items-start gap-2.5 rounded-xl border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-900">
           <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
           <p>
             입력하신 건강 특이사항을 고려해 커리큘럼을 조정했어요. 건강 상태에 따라 전문가 또는

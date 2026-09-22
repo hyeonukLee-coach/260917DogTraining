@@ -45,10 +45,13 @@ const config: Config = {
           DEFAULT: "hsl(var(--card))",
           foreground: "hsl(var(--card-foreground))",
         },
-        // brand palette — 시크 다크 톤
-        paper: "#14120F",
-        sand: "#241F19",
-        cocoa: "#C9A467",
+        // 브랜드 팔레트 — 따뜻하고 깨끗한 라이트 톤 (UNIPAWS 브랜드 가이드 기반)
+        paper: "#FFF8E9", // 배경: 은은한 웜 크림
+        cream: "#FFF5D7", // 브랜드 가장 밝은 톤 (하이라이트/섹션 배경)
+        sand: "#EED9A4", // 브랜드 서브 톤 (인풋/배지/탭 채움)
+        cocoa: "#82633A", // 브랜드 메인 톤을 텍스트 대비 기준으로 보정한 진한 버전
+        cocoaLight: "#B49768", // 브랜드 메인 톤 원본 (장식용 아이콘/큰 면적)
+        ink: "#2B2014", // 본문 텍스트
       },
       borderRadius: {
         lg: "var(--radius)",

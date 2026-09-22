@@ -11,9 +11,9 @@ const buttonVariants = cva(
       variant: {
         default: "bg-cocoa text-paper shadow-sm hover:scale-[1.02] hover:bg-cocoa/90",
         outline:
-          "border border-cocoa/30 bg-transparent text-cocoa hover:scale-[1.02] hover:bg-white/5",
-        ghost: "hover:bg-white/5 hover:text-cocoa",
-        secondary: "bg-sand text-cocoa hover:scale-[1.02] hover:brightness-125",
+          "border border-cocoa/30 bg-transparent text-cocoa hover:scale-[1.02] hover:bg-cocoa/10",
+        ghost: "hover:bg-cocoa/10 hover:text-cocoa",
+        secondary: "bg-sand text-cocoa hover:scale-[1.02] hover:brightness-95",
       },
       size: {
         default: "h-11 px-6 py-2",

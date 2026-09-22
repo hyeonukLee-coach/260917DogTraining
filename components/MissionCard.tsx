@@ -11,8 +11,8 @@ import { Mission, MissionCategory } from "@/types/wellness";
 
 const CATEGORY_STYLES: Record<MissionCategory, string> = {
   운동: "bg-cocoa/15 text-cocoa",
-  교육: "bg-amber-400/15 text-amber-300",
-  생활관리: "bg-emerald-400/15 text-emerald-300",
+  교육: "bg-amber-100 text-amber-800",
+  생활관리: "bg-orange-100 text-orange-800",
 };
 
 const STATUS_META: Record<
@@ -21,7 +21,7 @@ const STATUS_META: Record<
 > = {
   completed: { label: "미션완료", className: "bg-cocoa/15 text-cocoa", icon: CheckCircle2 },
   uncertified: { label: "미인증", className: "bg-destructive/15 text-destructive", icon: Clock },
-  today: { label: "오늘의 미션", className: "bg-amber-400/15 text-amber-300", icon: Clock },
+  today: { label: "오늘의 미션", className: "bg-amber-100 text-amber-800", icon: Clock },
   upcoming: { label: "예정", className: "bg-muted text-muted-foreground", icon: Lock },
 };
 

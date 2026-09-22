@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { PawPrint, User, Users } from "lucide-react";
 
@@ -13,10 +14,10 @@ const LINKS = [
 
 export function TopNav() {
   return (
-    <header className="sticky top-0 z-10 border-b border-border bg-paper/95 backdrop-blur">
+    <header className="sticky top-0 z-10 border-b border-border/70 bg-paper/95 backdrop-blur">
       <div className="mx-auto flex w-full max-w-2xl items-center justify-between gap-2 px-4 py-3 sm:px-6">
-        <Link href="/" className="text-sm font-bold text-cocoa">
-          UNIPAWS
+        <Link href="/" className="flex items-center" aria-label="UNIPAWS 홈으로">
+          <Image src="/logo-wordmark.webp" alt="UNIPAWS" width={112} height={28} priority className="h-6 w-auto sm:h-7" />
         </Link>
         <nav className="flex items-center gap-3">
           {LINKS.map(({ href, label, icon: Icon }) => (
