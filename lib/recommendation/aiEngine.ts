@@ -257,6 +257,8 @@ export async function analyzeDogWithAI(dog: AssessmentInput, apiKey: string): Pr
   const days: CurriculumDay[] = [...parsed.data.days]
     .sort((a, b) => a.day - b.day)
     .map((item) => {
+      // Firestore는 값이 undefined인 필드를 거부하므로, emoji가 없으면
+      // undefined를 넣는 대신 필드 자체를 아예 빼고 객체를 만든다.
       const mission: Mission = {
         id: `ai-${generateId()}`,
         category: item.category as MissionCategory,
@@ -267,7 +269,7 @@ export async function analyzeDogWithAI(dog: AssessmentInput, apiKey: string): Pr
         why: item.why,
         how: item.how,
         caution: item.caution,
-        emoji: item.emoji,
+        ...(item.emoji ? { emoji: item.emoji } : {}),
       };
       return { day: item.day, items: [mission] };
     });

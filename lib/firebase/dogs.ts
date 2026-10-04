@@ -49,8 +49,23 @@ export type CreateDogInput = Omit<Dog, "id" | "createdAt" | "updatedAt">;
 
 export async function createDog(input: CreateDogInput): Promise<string> {
   const db = getFirestoreDb();
+  // Firestore는 값이 undefined인 필드를 거부하므로(에러 발생), 입력하지 않은
+  // 선택 항목은 모두 null로 바꿔서 저장한다. mapDog()에서 다시 undefined로 읽는다.
   const ref = await addDoc(collection(db, "dogs"), {
-    ...input,
+    ownerUid: input.ownerUid,
+    name: input.name,
+    birthDate: input.birthDate ?? null,
+    ageYears: input.ageYears ?? null,
+    breed: input.breed,
+    gender: input.gender ?? null,
+    weightKg: input.weightKg ?? null,
+    neutered: input.neutered ?? null,
+    healthConditions: input.healthConditions ?? null,
+    activityLevel: input.activityLevel ?? null,
+    dailyWalkMinutes: input.dailyWalkMinutes ?? null,
+    behaviorConcerns: input.behaviorConcerns ?? null,
+    physicalConcerns: input.physicalConcerns ?? null,
+    goals: input.goals,
     createdAt: serverTimestamp(),
     updatedAt: serverTimestamp(),
   });
