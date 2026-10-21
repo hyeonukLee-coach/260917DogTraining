@@ -10,6 +10,7 @@ import {
   saveCurriculum,
   setMissionRecord,
 } from "@/lib/firebase/dogs";
+import { groupTemplatesByCategory, listMissionTemplates } from "@/lib/firebase/missionTemplates";
 import { getLocalDateString } from "@/lib/progress";
 import { analyzeDogWithAI } from "@/lib/recommendation/aiEngine";
 import { analyzeDog } from "@/lib/recommendation/engine";
@@ -88,10 +89,13 @@ export const useWellnessStore = create<WellnessStore>((set, get) => ({
       ownerUid,
     };
 
+    // 관리자가 엑셀/워드로 업로드한 미션도 배합 재료로 함께 쓴다(없으면 조용히 생략).
+    const uploadedTemplates = await listMissionTemplates().catch(() => []);
+
     const plan =
       options.mode === "ai"
-        ? await analyzeDogWithAI(assessmentInput, options.apiKey ?? "")
-        : analyzeDog(assessmentInput);
+        ? await analyzeDogWithAI(assessmentInput, options.apiKey ?? "", uploadedTemplates)
+        : analyzeDog(assessmentInput, groupTemplatesByCategory(uploadedTemplates));
 
     const dogId = await createDogDoc({
       ownerUid,

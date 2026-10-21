@@ -2,6 +2,7 @@ import { z } from "zod";
 
 import { generateId } from "@/lib/dataStore";
 import { decideProgramWeeks } from "@/lib/recommendation/engine";
+import { MissionTemplate } from "@/data/missionLibrary";
 import {
   AssessmentInput,
   CurriculumDay,
@@ -117,6 +118,15 @@ function buildSystemInstruction(totalDays: number, weeks: number): string {
 - emoji는 미션마다 과하지 않게 1개까지만 붙이세요 (없어도 됩니다).`;
 }
 
+/** 관리자가 올린 참고 미션을, 길이 제한 때문에 이름·카테고리 정도만 간단히 요약한다 */
+function buildReferenceTemplatesNote(templates: MissionTemplate[]): string {
+  if (templates.length === 0) return "";
+  const lines = templates
+    .slice(0, 40)
+    .map((t) => `- (${t.category}/${t.difficulty}) ${t.name}: ${t.why}`);
+  return `\n\n참고로 보호자가 올린 아래 자료도 아이디어로 활용해보세요(그대로 베끼지 말고 참고만 하세요):\n${lines.join("\n")}`;
+}
+
 function buildDogSummary(dog: AssessmentInput): string {
   const lines: string[] = [];
   lines.push(`이름: ${dog.name}`);
@@ -157,7 +167,11 @@ function friendlyErrorFromBody(status: number, body: unknown): string {
   return `AI 요청이 실패했습니다. (오류 코드: ${status})`;
 }
 
-export async function analyzeDogWithAI(dog: AssessmentInput, apiKey: string): Promise<WellnessPlan> {
+export async function analyzeDogWithAI(
+  dog: AssessmentInput,
+  apiKey: string,
+  referenceTemplates: MissionTemplate[] = []
+): Promise<WellnessPlan> {
   const trimmedKey = apiKey.trim();
   if (!trimmedKey) {
     throw new AIAnalysisError("Gemini API 키를 입력해주세요.");
@@ -186,7 +200,7 @@ export async function analyzeDogWithAI(dog: AssessmentInput, apiKey: string): Pr
             role: "user",
             parts: [
               {
-                text: `다음 반려견 정보를 참고해 ${weeks}주(${totalDays}일) 통합 커리큘럼을 만들어주세요.\n\n${buildDogSummary(dog)}`,
+                text: `다음 반려견 정보를 참고해 ${weeks}주(${totalDays}일) 통합 커리큘럼을 만들어주세요.\n\n${buildDogSummary(dog)}${buildReferenceTemplatesNote(referenceTemplates)}`,
               },
             ],
           },

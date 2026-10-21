@@ -46,6 +46,26 @@ service cloud.firestore {
       allow read, write: if isAdmin();
     }
 
+    // 관리자가 엑셀/워드 파일에서 추출해 올린 미션 템플릿. 모든 사용자의 커리큘럼
+    // 생성에 재료로 쓰여야 하므로 누구나 읽을 수 있고, 쓰기는 관리자만 할 수 있다.
+    match /missionTemplates/{templateId} {
+      allow read: if true;
+      allow create: if isAdmin()
+        && request.resource.data.category in ['교육', '운동', '생활관리']
+        && request.resource.data.name is string
+        && request.resource.data.name.size() > 0
+        && request.resource.data.difficulty in ['초급', '중급', '고급']
+        && request.resource.data.why is string
+        && request.resource.data.why.size() > 0
+        && request.resource.data.how is string
+        && request.resource.data.how.size() > 0
+        && request.resource.data.caution is string
+        && request.resource.data.caution.size() > 0
+        && request.resource.data.createdByUid == request.auth.uid;
+      allow update: if isAdmin();
+      allow delete: if isAdmin();
+    }
+
     // 반려견 프로필: 소유자(ownerUid) 본인과 관리자만 읽을 수 있고, 본인만 쓸 수 있다.
     match /dogs/{dogId} {
       allow read: if isOwner(resource.data.ownerUid) || isAdmin();

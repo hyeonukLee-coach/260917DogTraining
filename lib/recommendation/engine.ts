@@ -218,8 +218,14 @@ function buildUnifiedSummary(
  * 배합한 하나의 통합 커리큘럼(WellnessPlan)을 만든다. 이 함수의 입력/출력 타입은
  * 고정되어 있으며, 추후 규칙 기반 로직 대신 실제 AI API 호출
  * (lib/recommendation/aiEngine.ts)로 손쉽게 교체할 수 있다.
+ *
+ * extraTemplates: 관리자가 엑셀/워드로 업로드한 미션(lib/firebase/missionTemplates.ts)을
+ * 카테고리별 기본 템플릿 풀에 더해 함께 배합 재료로 쓴다. 생략하면 기본 템플릿만 쓴다.
  */
-export function analyzeDog(input: AssessmentInput): WellnessPlan {
+export function analyzeDog(
+  input: AssessmentInput,
+  extraTemplates: Partial<Record<MissionCategory, MissionTemplate[]>> = {}
+): WellnessPlan {
   const ageYears = resolveAgeYears(input);
   const goalScores = scoreGoals(input, ageYears);
   const rankedGoals = [...input.goals].sort(
@@ -237,7 +243,11 @@ export function analyzeDog(input: AssessmentInput): WellnessPlan {
   const perCategoryLength = Math.ceil(totalDays / CATEGORY_ORDER.length);
   const sequences = Object.fromEntries(
     CATEGORY_ORDER.map((category) => {
-      const pool = buildSortedPool(TEMPLATES_BY_CATEGORY[category], targetTags, maxDifficulty);
+      const combinedTemplates = [
+        ...TEMPLATES_BY_CATEGORY[category],
+        ...(extraTemplates[category] ?? []),
+      ];
+      const pool = buildSortedPool(combinedTemplates, targetTags, maxDifficulty);
       return [category, buildCyclicSequence(pool, perCategoryLength)];
     })
   ) as Record<MissionCategory, MissionTemplate[]>;

@@ -7,9 +7,16 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { AdminNoteCard } from "@/components/admin/AdminNoteCard";
 import { AdminNoteForm } from "@/components/admin/AdminNoteForm";
+import { MissionTemplateList } from "@/components/admin/MissionTemplateList";
+import { MissionTemplateUploadForm } from "@/components/admin/MissionTemplateUploadForm";
 import { fadeInProps, MotionDiv } from "@/components/motion";
 import { isAdminEmail } from "@/lib/admin";
 import { createAdminNote, deleteAdminNote, listAdminNotes, updateAdminNote } from "@/lib/firebase/adminNotes";
+import {
+  deleteMissionTemplate,
+  listMissionTemplates,
+  UploadedMissionTemplate,
+} from "@/lib/firebase/missionTemplates";
 import { useAuthStore } from "@/store/useAuthStore";
 import { AdminNote } from "@/types/admin";
 
@@ -111,6 +118,42 @@ function AdminNotes({ authorUid, authorEmail }: { authorUid: string; authorEmail
   );
 }
 
+function MissionTemplates({ adminUid }: { adminUid: string }) {
+  const [templates, setTemplates] = useState<UploadedMissionTemplate[] | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  const reload = async () => {
+    try {
+      setTemplates(await listMissionTemplates());
+    } catch {
+      setError("목록을 불러오지 못했어요. 잠시 후 다시 시도해주세요.");
+    }
+  };
+
+  useEffect(() => {
+    reload();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  return (
+    <div className="flex flex-col gap-4">
+      <MissionTemplateUploadForm adminUid={adminUid} onImported={reload} />
+
+      {error && <p className="text-sm text-destructive">{error}</p>}
+      {templates === null && !error && <p className="text-sm text-muted-foreground">불러오는 중...</p>}
+      {templates && (
+        <MissionTemplateList
+          templates={templates}
+          onDelete={async (templateId) => {
+            await deleteMissionTemplate(templateId);
+            await reload();
+          }}
+        />
+      )}
+    </div>
+  );
+}
+
 export default function AdminPage() {
   const user = useAuthStore((state) => state.user);
   const isAuthLoading = useAuthStore((state) => state.isLoading);
@@ -136,7 +179,18 @@ export default function AdminPage() {
       ) : !admin ? (
         <NotAdminNotice />
       ) : (
-        <AdminNotes authorUid={user.uid} authorEmail={user.email ?? ""} />
+        <>
+          <AdminNotes authorUid={user.uid} authorEmail={user.email ?? ""} />
+
+          <div className="flex flex-col gap-2 border-t border-border pt-6">
+            <h2 className="text-xl font-bold text-cocoa">운동·교육 콘텐츠 업로드</h2>
+            <p className="text-sm text-muted-foreground">
+              엑셀·워드 파일을 올리면 내용이 미션 콘텐츠로 변환돼 모든 보호자의 커리큘럼 생성에
+              함께 쓰여요.
+            </p>
+          </div>
+          <MissionTemplates adminUid={user.uid} />
+        </>
       )}
     </MotionDiv>
   );
